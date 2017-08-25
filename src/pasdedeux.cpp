@@ -36,8 +36,8 @@ public:
 	int iv;
 	int tick;
 	bool hCostInfAllow;
-	//geometry_msgs::Twist msg;
-	//ros::Publisher pb[NUM_AGT];
+	geometry_msgs::Twist msg;
+	ros::Publisher pb[NUM_AGT];
 	//ros::Subscriber sb[NUM_AGT];
 	ros::NodeHandle nh;	
 	//Agent agt[NUM_AGT];
@@ -63,13 +63,13 @@ public:
 		initWall();
 		std::cout << "Number of Objects simulated = " << NUM_OBJ << std::endl;
 		std::cout << "Number of Agents simulated = " << NUM_AGT << std::endl;		
-		/*std::ostringstream oss;
+		std::ostringstream oss;
 		for(i = 0; i < NUM_AGT; i++) {
 			oss.str("");
 			oss << "agt" << i << "/cmd_vel";
 			pb[i] = nh.advertise<geometry_msgs::Twist>(oss.str(),1000);
 			pb[i].publish(msg);	// First msg gets missed
-		}*/
+		}
 	}	
 
 	// ############################################## @$ ##############################################
@@ -845,6 +845,13 @@ private:
 	{
 		std::cout << "Communicate to Motor Driver --> \t(non-differential) value : " << cmd;
 		// Translate command to PWM DC Motor signal duration here...
+		msg.angular.z = 0;
+		msg.linear.x = 10;
+		pb[i].publish(msg);
+		usleep(cmd*10000);	// Wait for actuation to get over
+		msg.angular.z = 0;
+		msg.linear.x = 0;
+		pb[i].publish(msg);		
 		return cmd;
 	}
 
@@ -1033,13 +1040,13 @@ private:
 	
 	void printDebug()
 	{
-		//return;
 		int n;
 		printWorld();
 		for (n = 0; n < NUM_OBJ; n++)	
 			printObject(n,false);
 		for (n = 0; n < NUM_AGT; n++)	
 			printObject(n,true);
+		return;
 		frameWorld();
 	}
 
