@@ -22,11 +22,14 @@ enum EnvStates {
 	AGENTCG		= 10,	
 };
 
+int ROS_NODE_ID;
+
 class PasDeDeux
 {
 
 public:
 
+	//int ROS_NODE_ID;
 	bool leader;
 	bool EnvMap[GRID_Y][GRID_X];
 	bool hCostInf[GRID_Y][GRID_X];
@@ -38,7 +41,7 @@ public:
 	bool hCostInfAllow;
 	geometry_msgs::Twist msg;
 	ros::Publisher pb[NUM_AGT];
-	//ros::Subscriber sb[NUM_AGT];
+	ros::Subscriber sb;
 	ros::NodeHandle nh;	
 	//Agent agt[NUM_AGT];
 	bool paintWall;
@@ -49,11 +52,56 @@ public:
 	PasDeDeux(int argc, char** argv)
 	{
 		srand(time(0));
-		leader = electLeader();
-		if (!leader)
-			return;
+		leader = electLeader(ROS_NODE_ID);
+		msg.angular.z = 0;
+		msg.linear.x = 0;
+	}	
+
+	// ############################################## @$ ##############################################
+
+	void Waltz()
+	{
+		std::ostringstream oss;
+		oss.str("");
+		oss << "agt" << ROS_NODE_ID << "/cmd_vel";
+		sb = nh.subscribe(oss.str(),1,actuate);
+		usleep(10000);
+		if (leader)
+			ros::spinOnce();
+		else {
+			std::cout << "ROS_NODE " << ROS_NODE_ID << " entering slave mode..." << std::endl;
+			ros::spin();
+			std::cout << "\nROS_NODE " << ROS_NODE_ID << " exiting slave mode..." << std::endl;
+		}
+	}
+	
+	// ############################################## @$ ##############################################
+
+	void static actuate(const geometry_msgs::Twist& moveMsg)
+	{
+		// Why static? Refer:
+		// https://arduino.stackexchange.com/questions/29322/iso-c-forbids-taking-the-address-of-an-unqualified-or-parenthesized-non-static
+		if (moveMsg.linear.x == 0)
+			ROS_INFO_STREAM("Cmd Received : Rotate    = "<<moveMsg.angular.z);
+		else
+			ROS_INFO_STREAM("Cmd Received : Translate = "<<moveMsg.linear.x);
+		// Translate command to PWM DC Motor signal duration here...
+		// Connect to Motor Driver here ...
+		//usleep(cmd*10000);	// Wait for actuation to get over
+	}
+		
+	// ############################################## @$ ##############################################
+
+	void Adagio()
+	{
+		int i, j, k, n, agtrr;
+		bool solve = false;		
+		pose objTgt, err;
+		std::vector<int> agttrail[NUM_AGT];
+		std::vector<int> objtrail[NUM_OBJ];
+		std::vector<int> objtrailBkup, objtrailNew;
+		
 		tick = 0;
-		int i, j;
 		for (i = 0; i < GRID_Y; i++) {
 			for (j = 0; j < GRID_X; j++) {
 				EnvMap[i][j] = true;
@@ -67,21 +115,15 @@ public:
 		for(i = 0; i < NUM_AGT; i++) {
 			oss.str("");
 			oss << "agt" << i << "/cmd_vel";
-			pb[i] = nh.advertise<geometry_msgs::Twist>(oss.str(),1000);
-			pb[i].publish(msg);	// First msg gets missed
-		}
-	}	
-
-	// ############################################## @$ ##############################################
-
-	void Adagio()
-	{
-		int i, j, k, n, agtrr;
-		bool solve = false;		
-		pose objTgt, err;
-		std::vector<int> agttrail[NUM_AGT];
-		std::vector<int> objtrail[NUM_OBJ];
-		std::vector<int> objtrailBkup, objtrailNew;
+			pb[i] = nh.advertise<geometry_msgs::Twist>(oss.str(),1);
+			usleep(5000);
+			pb[i].publish(msg);	// First msg gets missed -- WATSON
+			usleep(5000);
+		}		
+		std::cout << "Initialize Subscriber and continue..." << std::endl;		
+		getchar();
+		//int trigger;
+		//std::cin >> trigger;
 		
 		initObjects();
 		initAgents();
@@ -122,20 +164,15 @@ public:
 						continue;
 					}
 					else if (agttrail[agtrr].size() != 0) {
-						// Issue Actuation Command to Hardware here ...
 						//agt[i].navigate(i,msg,GridWorld);
-						//pb[i].publish(msg);
-						//ROS_INFO_STREAM("Cmd Sent"<<" Linear="<<msg.linear.x<<" Angular="<<msg.angular.z << " Debug" << floor(4*double(rand())/double(RAND_MAX)));
-			
-
 						err = estimateErr(&agt[agtrr]);
 						switch (agttrail[agtrr][0]) {
-							case MOVE_E		: translateObject(&agt[agtrr],actuateT(senseWhlEnc(1-err.pos.x)),0);	break;
-							case MOVE_N		: translateObject(&agt[agtrr],0,-actuateT(senseWhlEnc(1-err.pos.y)));	break;
-							case MOVE_W		: translateObject(&agt[agtrr],-actuateT(senseWhlEnc(1-err.pos.x)),0);	break;
-							case MOVE_S		: translateObject(&agt[agtrr],0,actuateT(senseWhlEnc(1-err.pos.y)));	break;
-							case TURN_C		: rotateObject(&agt[agtrr],actuateR(-senseWhlEnc(1-err.ori)));			break;
-							case TURN_AC	: rotateObject(&agt[agtrr],actuateR(senseWhlEnc(1-err.ori)));			break;
+							case MOVE_E		: translateObject(&agt[agtrr],actuateT(agtrr,senseWhlEnc(1-err.pos.x)),0);	break;
+							case MOVE_N		: translateObject(&agt[agtrr],0,-actuateT(agtrr,senseWhlEnc(1-err.pos.y)));	break;
+							case MOVE_W		: translateObject(&agt[agtrr],-actuateT(agtrr,senseWhlEnc(1-err.pos.x)),0);	break;
+							case MOVE_S		: translateObject(&agt[agtrr],0,actuateT(agtrr,senseWhlEnc(1-err.pos.y)));	break;
+							case TURN_C		: rotateObject(&agt[agtrr],actuateR(agtrr,-senseWhlEnc(1-err.ori)));		break;
+							case TURN_AC	: rotateObject(&agt[agtrr],actuateR(agtrr,senseWhlEnc(1-err.ori)));			break;
 						}
 						printDebug();
 						std::cout << "\nObject " << n << " ";
@@ -204,9 +241,11 @@ public:
 	// ############################################## @$ ##############################################
 
 private:
-	bool electLeader()
+	bool electLeader(int nodeId)
 	{
-		return true;
+		if (nodeId == 0)	// replace with random polling leader allocation phase
+			return true;
+		return false;
 	}
 
 	// ############################################## @$ ##############################################
@@ -841,26 +880,27 @@ private:
 
 	// ############################################## @$ ##############################################
 	
-	float actuateT(float cmd)
+	float actuateT(int agtId, float cmd)
 	{
-		std::cout << "Communicate to Motor Driver --> \t(non-differential) value : " << cmd;
-		// Translate command to PWM DC Motor signal duration here...
+		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> (non-differential) value \t: " << cmd << std::endl;
 		msg.angular.z = 0;
-		msg.linear.x = 10;
-		pb[i].publish(msg);
-		usleep(cmd*10000);	// Wait for actuation to get over
-		msg.angular.z = 0;
-		msg.linear.x = 0;
-		pb[i].publish(msg);		
+		msg.linear.x = cmd;
+		pb[agtId].publish(msg);
+		usleep(10000);
+		// Waltz
 		return cmd;
 	}
 
 	// ############################################## @$ ##############################################
 	
-	float actuateR(float cmd)
+	float actuateR(int agtId, float cmd)
 	{
-		std::cout << "Communicate to Motor Driver --> \t(differential) value : " << cmd;
-		// Translate command to PWM DC Motor signal duration here...
+		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> (differential) value \t: " << cmd;
+		msg.angular.z = cmd;
+		msg.linear.x = 0;
+		pb[agtId].publish(msg);
+		usleep(10000);
+		// Waltz
 		return cmd;
 	}	
 
@@ -1047,7 +1087,7 @@ private:
 		for (n = 0; n < NUM_AGT; n++)	
 			printObject(n,true);
 		return;
-		frameWorld();
+		frameWorld();	// suppressed in Raspberry Pi
 	}
 
 	// ############################################## @$ ##############################################
@@ -1055,9 +1095,23 @@ private:
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "pasdedeux");
+	if (argc < 2) {
+		std::cout << "Not enough input arguments --> rosrun pas_de_deux swarm_node <ROS_NODE_ID>" << std::endl;
+		return 1;
+	}
+	ROS_NODE_ID = std::atoi(argv[1]);
+	std::cout << "ROS_NODE_ID = " << ROS_NODE_ID << std::endl;
+	std::ostringstream oss;
+	oss.str("");
+	oss << "pasdedeux" << ROS_NODE_ID;
+	ros::init(argc, argv, oss.str());
 	PasDeDeux pdd(argc, argv);
-	pdd.Adagio();
+	if (pdd.leader) {
+		pdd.Adagio();
+	}
+	else {
+		pdd.Waltz();
+	}
 	ros::shutdown();
 	return 1; 
 }
