@@ -22,13 +22,17 @@ enum EnvStates {
 	AGENTCG		= 10,	
 };
 
+bool INTELLIGENT;
 int ROS_NODE_ID;
 
+
+	
 class PasDeDeux
 {
 
 public:
-
+	void pollBooth(const geometry_msgs::Twist& voteMsg);
+	void actuate(const geometry_msgs::Twist& moveMsg);
 	//int ROS_NODE_ID;
 	bool leader;
 	bool EnvMap[GRID_Y][GRID_X];
@@ -45,26 +49,126 @@ public:
 	ros::NodeHandle nh;	
 	//Agent agt[NUM_AGT];
 	bool paintWall;
-		
-
+	//static float* pollsP;//[NUM_AGT];	// Poll values	
+	//static bool* syncStsP;// = NULL;//[NUM_AGT];	// Global poll sync status
+	float polls[NUM_AGT];	// Poll values	
+	bool syncSts[NUM_AGT];	// Global poll sync status
+	bool rcvdPolls[NUM_AGT];// Local poll sync status
+				
 	// ############################################## @$ ##############################################
 
 	PasDeDeux(int argc, char** argv)
 	{
 		srand(time(0));
-		leader = electLeader(ROS_NODE_ID);
+		leader = electLeader();
 		msg.angular.z = 0;
 		msg.linear.x = 0;
 	}	
+	
+	// ############################################## @$ ##############################################
 
+	bool electLeader()
+	{
+		/* array = [index = agtId][random polled value][received?][synced?]
+		 * if capable == 1, poll own value, else 0
+		 * own sync = 0
+		 * while (sum of synced == NUM_AGT) {
+		 * 		publish own value & sync
+		 * 		check subscriptions and fill received == false
+		 * 		if all received = true, own sync = 1
+		 * }
+		 * if own value is max value, leader, else slave
+		 */
+		int i; 
+		bool synced = false;
+	
+		std::ostringstream oss;
+		oss.str("");
+		oss << "agt" << ROS_NODE_ID << "/cmd_vel";
+		ros::Publisher pbVote = nh.advertise<geometry_msgs::Twist>(oss.str(),100);
+		usleep(50000);	// wait till publisher is registered with master
+		ros::Subscriber sbVote[NUM_AGT];
+		for(i = 0; i < NUM_AGT; i++) {
+			if (ROS_NODE_ID == i)
+				continue;
+			oss.str("");
+			oss << "agt" << i << "/cmd_vel";
+			sbVote[i] = nh.subscribe(oss.str(),100,&PasDeDeux::pollBooth,this);
+			usleep(10000);
+		}			
+					
+		for (i = 0; i < NUM_AGT; i++) {
+			rcvdPolls[i] = false;
+			syncSts[i] = false;
+		}
+		polls[ROS_NODE_ID] = INTELLIGENT ? double(rand()) / double(RAND_MAX) : 0;
+		rcvdPolls[ROS_NODE_ID] = true;
+		std::cout << "Entering Poll Loop " << std::endl;
+		do {
+			
+			
+			msg.linear.x = ROS_NODE_ID;
+			msg.linear.y = syncSts[ROS_NODE_ID] ? 1 : 0;
+			msg.linear.z = polls[ROS_NODE_ID];
+			pbVote.publish(msg);	
+			
+						
+			ros::spinOnce();
+			
+			syncSts[ROS_NODE_ID] = true;
+			for (i = 0; i < NUM_AGT; i++) {
+				if (rcvdPolls[i] == false) {
+					syncSts[ROS_NODE_ID] = false;
+					break;
+				}					
+			}
+			synced = true;
+			for (i = 0; i < NUM_AGT; i++) {
+				if (syncSts[i] == false) {
+					synced = false;
+					break;
+				}
+			}
+			for (i = 0; i < NUM_AGT; i++) {
+				std::cout << "Agent : " << i << "\tReceived : " << (rcvdPolls[i] ? 1 : 0) << "\tSynced : " << (syncSts[i] ? 1 : 0) << "\tPoll Value : " << polls[i] << std::endl;
+			}
+			std::cout << std::endl;
+			//for(i = 0; i < NUM_AGT; i++) {
+			//	if (ROS_NODE_ID == i)
+			//		continue;
+			//	sbVote[i].shutdown();
+			//}
+			usleep(2000);
+		} while (!synced);
+		std::cout << "Exiting Poll Loop " << std::endl;
+		
+		float leadVote = 0;
+		int leadNode = INFVAL;
+		for (i = 0; i < NUM_AGT; i++) {
+			if (rcvdPolls[i] > leadVote) {
+				leadVote = rcvdPolls[i];
+				leadNode = i;
+			}
+		}
+		if (ROS_NODE_ID == leadNode)
+			return true;
+		return false;	
+	}	
+	
 	// ############################################## @$ ##############################################
 
 	void Waltz()
 	{
+		std::cout << "Node "<<ROS_NODE_ID<<" is a slave" << std::endl;
+		for (int i = 0; i < NUM_AGT; i++) {
+			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
+		}
+		return;
+		
 		std::ostringstream oss;
 		oss.str("");
 		oss << "agt" << ROS_NODE_ID << "/cmd_vel";
-		sb = nh.subscribe(oss.str(),1,actuate);
+		sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
 		usleep(10000);
 		if (leader)
 			ros::spinOnce();
@@ -74,26 +178,17 @@ public:
 			std::cout << "\nROS_NODE " << ROS_NODE_ID << " exiting slave mode..." << std::endl;
 		}
 	}
-	
-	// ############################################## @$ ##############################################
-
-	void static actuate(const geometry_msgs::Twist& moveMsg)
-	{
-		// Why static? Refer:
-		// https://arduino.stackexchange.com/questions/29322/iso-c-forbids-taking-the-address-of-an-unqualified-or-parenthesized-non-static
-		if (moveMsg.linear.x == 0)
-			ROS_INFO_STREAM("Cmd Received : Rotate    = "<<moveMsg.angular.z);
-		else
-			ROS_INFO_STREAM("Cmd Received : Translate = "<<moveMsg.linear.x);
-		// Translate command to PWM DC Motor signal duration here...
-		// Connect to Motor Driver here ...
-		//usleep(cmd*10000);	// Wait for actuation to get over
-	}
 		
 	// ############################################## @$ ##############################################
 
 	void Adagio()
 	{
+		std::cout <<"Node "<<ROS_NODE_ID<<" is the master" << std::endl;
+		for (int i = 0; i < NUM_AGT; i++) {
+			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
+		}
+		return;
+		
 		int i, j, k, n, agtrr;
 		bool solve = false;		
 		pose objTgt, err;
@@ -241,13 +336,7 @@ public:
 	// ############################################## @$ ##############################################
 
 private:
-	bool electLeader(int nodeId)
-	{
-		if (nodeId == 0)	// replace with random polling leader allocation phase
-			return true;
-		return false;
-	}
-
+	
 	// ############################################## @$ ##############################################
 
 	void initWall()
@@ -1093,25 +1182,50 @@ private:
 	// ############################################## @$ ##############################################
 };
 
-int main(int argc, char** argv)
-{
-	if (argc < 2) {
-		std::cout << "Not enough input arguments --> rosrun pas_de_deux swarm_node <ROS_NODE_ID>" << std::endl;
-		return 1;
+	void PasDeDeux::pollBooth(const geometry_msgs::Twist& voteMsg)
+	{
+		//if (!rcvdPolls[(int)voteMsg.linear.x]) {
+			rcvdPolls[(int)voteMsg.linear.x] = true;	
+			polls[(int)voteMsg.linear.x] = voteMsg.linear.z;
+			syncSts[(int)voteMsg.linear.x] = voteMsg.linear.y == 1 ? true : false;
+		//}		
 	}
-	ROS_NODE_ID = std::atoi(argv[1]);
-	std::cout << "ROS_NODE_ID = " << ROS_NODE_ID << std::endl;
-	std::ostringstream oss;
-	oss.str("");
-	oss << "pasdedeux" << ROS_NODE_ID;
-	ros::init(argc, argv, oss.str());
-	PasDeDeux pdd(argc, argv);
-	if (pdd.leader) {
-		pdd.Adagio();
+	
+	// ############################################## @$ ##############################################
+	
+	void PasDeDeux::actuate(const geometry_msgs::Twist& moveMsg)
+	{
+		if (moveMsg.linear.x == 0)
+			ROS_INFO_STREAM("Cmd Received : Rotate    = "<<moveMsg.angular.z);
+		else
+			ROS_INFO_STREAM("Cmd Received : Translate = "<<moveMsg.linear.x);
+		// Translate command to PWM DC Motor signal duration here...
+		// Connect to Motor Driver here ...
+		//usleep(cmd*10000);	// Wait for actuation to get over
 	}
-	else {
-		pdd.Waltz();
+	
+	// ############################################## @$ ##############################################
+
+	int main(int argc, char** argv)
+	{
+		if (argc < 2) {
+			std::cout << "Not enough input arguments --> rosrun pas_de_deux swarm_node <ROS_NODE_ID>" << std::endl;
+			return 1;
+		}
+		ROS_NODE_ID = std::atoi(argv[1]);
+		std::cout << "ROS_NODE_ID = " << ROS_NODE_ID << std::endl;
+		std::ostringstream oss;
+		oss.str("");
+		oss << "pasdedeux" << ROS_NODE_ID;
+		ros::init(argc, argv, oss.str());
+		INTELLIGENT = true;
+		PasDeDeux pdd(argc, argv);
+		if (pdd.leader) {
+			pdd.Adagio();
+		}
+		else {
+			pdd.Waltz();
+		}
+		ros::shutdown();
+		return 1; 
 	}
-	ros::shutdown();
-	return 1; 
-}
