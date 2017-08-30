@@ -1,0 +1,47 @@
+digraph {
+    label="\nPas de Deux\n(pasdedeux.cpp)"
+
+    node[shape="box", style="rounded"]
+       start; end;
+    input [shape = "parallelogram", style = ""];
+	start -> input;
+    
+	main01 [shape = "box", style = ""];
+	start -> main01;
+	main01 [label = "Set ROS_NODE_ID,\nINTELLIGENCE and\nSENSITIVE values"]
+	
+	main02 [shape = "box", style = ""];
+	main01 -> main02;
+	main02 [label = "ros::init"];
+	
+	electLeader01 [shape = "box", style = ""];
+	main02 -> electLeader01;
+	electLeader01 [label = "Poll a random number"];
+	
+	electLeader02 [shape = "diamond", style = ""];
+	electLeader01 -> electLeader02;
+	electLeader02 [label = "All nodes\n synced?"];
+	
+	electLeader03 [shape = "box", style = ""];
+	electLeader02 -> electLeader03 [label = "false"];
+	electLeader03 [label = "Publish own poll value\nand sync status"];
+	
+	electLeader04 [shape = "box", style = ""];
+	electLeader03 -> electLeader04;
+	electLeader04 [label = "Subscribe and update\npoll and sync status\nof other nodes"];
+	
+	electLeader05 [shape = "box", style = ""];
+	electLeader04 -> electLeader05;
+	electLeader05 [label = "Subscribe and update\npoll and sync status\nof other nodes"];
+	
+	
+	
+	
+	
+	
+	main03 [shape = "box", style = ""];
+	main03 -> end;
+	main03 [label = "ros::shutdown"];
+	
+	{rank = sink; end}
+}

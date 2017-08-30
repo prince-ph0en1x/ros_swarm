@@ -33,7 +33,7 @@ class PasDeDeux
 public:
 	void pollBooth(const geometry_msgs::Twist& voteMsg);
 	void actuate(const geometry_msgs::Twist& moveMsg);
-	//int ROS_NODE_ID;
+	void sense(geometry_msgs::Twist::Request& req, geometry_msgs::Twist::Response& res);
 	bool leader;
 	bool EnvMap[GRID_Y][GRID_X];
 	bool hCostInf[GRID_Y][GRID_X];
@@ -46,14 +46,14 @@ public:
 	geometry_msgs::Twist msg;
 	ros::Publisher pb[NUM_AGT];
 	ros::Subscriber sb;
+	ros::ServiceClient cl[NUM_AGT];
+	ros::ServiceServer sv;
 	ros::NodeHandle nh;	
-	//Agent agt[NUM_AGT];
 	bool paintWall;
-	//static float* pollsP;//[NUM_AGT];	// Poll values	
-	//static bool* syncStsP;// = NULL;//[NUM_AGT];	// Global poll sync status
 	float polls[NUM_AGT];	// Poll values	
 	bool syncSts[NUM_AGT];	// Global poll sync status
 	bool rcvdPolls[NUM_AGT];// Local poll sync status
+	int whlEnc[NUM_AGT][3];	// Left(0), Right(1) and Dirty Bit(2) for Wheel Encoder Reading
 				
 	// ############################################## @$ ##############################################
 
@@ -81,10 +81,9 @@ public:
 		 */
 		int i; 
 		bool synced = false;
-	
 		std::ostringstream oss;
 		oss.str("");
-		oss << "agt" << ROS_NODE_ID << "/cmd_vel";
+		oss << "agt" << ROS_NODE_ID << "/msg_poll";
 		ros::Publisher pbVote = nh.advertise<geometry_msgs::Twist>(oss.str(),100);
 		usleep(50000);	// wait till publisher is registered with master
 		ros::Subscriber sbVote[NUM_AGT];
@@ -92,11 +91,10 @@ public:
 			if (ROS_NODE_ID == i)
 				continue;
 			oss.str("");
-			oss << "agt" << i << "/cmd_vel";
+			oss << "agt" << i << "/msg_poll";
 			sbVote[i] = nh.subscribe(oss.str(),100,&PasDeDeux::pollBooth,this);
 			usleep(10000);
-		}			
-					
+		}					
 		for (i = 0; i < NUM_AGT; i++) {
 			rcvdPolls[i] = false;
 			syncSts[i] = false;
@@ -105,16 +103,11 @@ public:
 		rcvdPolls[ROS_NODE_ID] = true;
 		std::cout << "Entering Poll Loop " << std::endl;
 		do {
-			
-			
 			msg.linear.x = ROS_NODE_ID;
 			msg.linear.y = syncSts[ROS_NODE_ID] ? 1 : 0;
 			msg.linear.z = polls[ROS_NODE_ID];
-			pbVote.publish(msg);	
-			
-						
+			pbVote.publish(msg);		
 			ros::spinOnce();
-			
 			syncSts[ROS_NODE_ID] = true;
 			for (i = 0; i < NUM_AGT; i++) {
 				if (rcvdPolls[i] == false) {
@@ -129,15 +122,10 @@ public:
 					break;
 				}
 			}
-			for (i = 0; i < NUM_AGT; i++) {
+			for (i = 0; i < NUM_AGT; i++)
 				std::cout << "Agent : " << i << "\tReceived : " << (rcvdPolls[i] ? 1 : 0) << "\tSynced : " << (syncSts[i] ? 1 : 0) << "\tPoll Value : " << polls[i] << std::endl;
-			}
 			std::cout << std::endl;
-			//for(i = 0; i < NUM_AGT; i++) {
-			//	if (ROS_NODE_ID == i)
-			//		continue;
-			//	sbVote[i].shutdown();
-			//}
+			// sbVote[i].shutdown();
 			usleep(2000);
 		} while (!synced);
 		std::cout << "Exiting Poll Loop " << std::endl;
@@ -150,29 +138,30 @@ public:
 				leadNode = i;
 			}
 		}
-		if (ROS_NODE_ID == leadNode)
+		for (int i = 0; i < NUM_AGT; i++)
+			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
+		if (ROS_NODE_ID == leadNode) {
+			std::cout << "Node " << ROS_NODE_ID << " is the master" << std::endl;
 			return true;
-		return false;	
+		}
+		std::cout << "Node " << ROS_NODE_ID << " is a slave" << std::endl;
+		return false;			
 	}	
 	
 	// ############################################## @$ ##############################################
 
 	void Waltz()
-	{
-		std::cout << "Node "<<ROS_NODE_ID<<" is a slave" << std::endl;
-		for (int i = 0; i < NUM_AGT; i++) {
-			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
-		}
-		return;
-		
-		std::ostringstream oss;
-		oss.str("");
-		oss << "agt" << ROS_NODE_ID << "/cmd_vel";
-		sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
-		usleep(10000);
-		if (leader)
+	{	
+		// Publish sensor data
+		if (leader) {
 			ros::spinOnce();
+		}
 		else {
+			std::ostringstream oss;
+			oss.str("");
+			oss << "agt" << ROS_NODE_ID << "/msg_actuate";
+			sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
+			usleep(10000);
 			std::cout << "ROS_NODE " << ROS_NODE_ID << " entering slave mode..." << std::endl;
 			ros::spin();
 			std::cout << "\nROS_NODE " << ROS_NODE_ID << " exiting slave mode..." << std::endl;
@@ -183,19 +172,12 @@ public:
 
 	void Adagio()
 	{
-		std::cout <<"Node "<<ROS_NODE_ID<<" is the master" << std::endl;
-		for (int i = 0; i < NUM_AGT; i++) {
-			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
-		}
-		return;
-		
 		int i, j, k, n, agtrr;
 		bool solve = false;		
 		pose objTgt, err;
 		std::vector<int> agttrail[NUM_AGT];
 		std::vector<int> objtrail[NUM_OBJ];
-		std::vector<int> objtrailBkup, objtrailNew;
-		
+		std::vector<int> objtrailBkup, objtrailNew;		
 		tick = 0;
 		for (i = 0; i < GRID_Y; i++) {
 			for (j = 0; j < GRID_X; j++) {
@@ -209,21 +191,26 @@ public:
 		std::ostringstream oss;
 		for(i = 0; i < NUM_AGT; i++) {
 			oss.str("");
-			oss << "agt" << i << "/cmd_vel";
+			oss << "agt" << i << "/msg_actuate";
 			pb[i] = nh.advertise<geometry_msgs::Twist>(oss.str(),1);
-			usleep(5000);
+			usleep(10000);
 			pb[i].publish(msg);	// First msg gets missed -- WATSON
-			usleep(5000);
-		}		
-		std::cout << "Initialize Subscriber and continue..." << std::endl;		
-		getchar();
-		//int trigger;
-		//std::cin >> trigger;
-		
+		}
+		oss.str("");
+		oss << "agt" << ROS_NODE_ID << "/msg_actuate";
+		sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
+		usleep(10000);
+		for(i = 0; i < NUM_AGT; i++) {
+			oss.str("");
+			oss << "agt" << i << "/svc_sensor";
+			cl[i] = nh.advertiseService(oss.str(),&PasDeDeux::sense);
+		}
+		usleep(10000);
+		// std::cout << "Press Enter to Continue..." << std::endl;		
+		// getchar();		
 		initObjects();
 		initAgents();
 		printDebug();
-
 		assign();
 		for (n = 0; n < NUM_OBJ; n++)	
 			buildCSpace(&obj[n]);
@@ -259,7 +246,6 @@ public:
 						continue;
 					}
 					else if (agttrail[agtrr].size() != 0) {
-						//agt[i].navigate(i,msg,GridWorld);
 						err = estimateErr(&agt[agtrr]);
 						switch (agttrail[agtrr][0]) {
 							case MOVE_E		: translateObject(&agt[agtrr],actuateT(agtrr,senseWhlEnc(1-err.pos.x)),0);	break;
@@ -971,12 +957,14 @@ private:
 	
 	float actuateT(int agtId, float cmd)
 	{
+		// wait for dirty bit of agt to be set
+		//while (whlEnc[agtId][2] == 0)
+		
 		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> (non-differential) value \t: " << cmd << std::endl;
 		msg.angular.z = 0;
 		msg.linear.x = cmd;
 		pb[agtId].publish(msg);
 		usleep(10000);
-		// Waltz
 		return cmd;
 	}
 
@@ -989,7 +977,6 @@ private:
 		msg.linear.x = 0;
 		pb[agtId].publish(msg);
 		usleep(10000);
-		// Waltz
 		return cmd;
 	}	
 
@@ -1171,11 +1158,11 @@ private:
 	{
 		int n;
 		printWorld();
+		return;
 		for (n = 0; n < NUM_OBJ; n++)	
 			printObject(n,false);
 		for (n = 0; n < NUM_AGT; n++)	
 			printObject(n,true);
-		return;
 		frameWorld();	// suppressed in Raspberry Pi
 	}
 
@@ -1184,11 +1171,9 @@ private:
 
 	void PasDeDeux::pollBooth(const geometry_msgs::Twist& voteMsg)
 	{
-		//if (!rcvdPolls[(int)voteMsg.linear.x]) {
-			rcvdPolls[(int)voteMsg.linear.x] = true;	
-			polls[(int)voteMsg.linear.x] = voteMsg.linear.z;
-			syncSts[(int)voteMsg.linear.x] = voteMsg.linear.y == 1 ? true : false;
-		//}		
+		rcvdPolls[(int)voteMsg.linear.x] = true;	
+		polls[(int)voteMsg.linear.x] = voteMsg.linear.z;
+		syncSts[(int)voteMsg.linear.x] = voteMsg.linear.y == 1 ? true : false;	
 	}
 	
 	// ############################################## @$ ##############################################
@@ -1202,6 +1187,18 @@ private:
 		// Translate command to PWM DC Motor signal duration here...
 		// Connect to Motor Driver here ...
 		//usleep(cmd*10000);	// Wait for actuation to get over
+		//cl[i] = nh.serviceClient<geometry_msgs::Twist>(oss.str());
+		
+	}
+	
+	// ############################################## @$ ##############################################
+	
+	void PasDeDeux::sense(geometry_msgs::Twist::Request& req, geometry_msgs::Twist::Response& res)
+	{
+		// WATSON : Handle case where dirty bit is already set
+		whlEnc[(int)req.linear.x][0] = req.linear.y;
+		whlEnc[(int)req.linear.x][1] = req.linear.z;
+		whlEnc[(int)req.linear.x][2] = 1;	// Set Motion Dirty
 	}
 	
 	// ############################################## @$ ##############################################

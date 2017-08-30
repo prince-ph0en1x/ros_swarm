@@ -1,0 +1,51 @@
+digraph {
+    label="\nPas de Deux\n(pasdedeux.cpp)\nLevel 1"
+
+    node[shape="box", style="rounded"]
+       start; end;
+    
+	main01 [shape = "box", style = ""];
+	start -> main01;
+	main01 [label = "Set ROS_NODE_ID,\nINTELLIGENCE and\nSENSITIVE values"]
+	
+	main02 [shape = "box", style = ""];
+	main01 -> main02;
+	main02 [label = "Elect Leader Node"];
+	
+	main03 [shape = "diamond", style = ""];
+	main02 -> main03;
+	main03 [label = "Is Leader?"];
+	
+	main04 [shape = "parallelogram", style = ""];
+	main03 -> main04 [label = "false"];
+	main04 [label = "Accept Motion Commands\nfrom Leader"];
+	
+	main05 [shape = "parallelogram", style = ""];
+	main04 -> main05;
+	main05 [label = "Issue Commands to\nMotor Driver"];
+	
+	main06 [shape = "parallelogram", style = ""];
+	main05 -> main06;
+	main06 [label = "Receive Odometry\nSensor Data"];
+	
+	main07 [shape = "parallelogram", style = ""];
+	main06 -> main07;
+	main07 -> main04
+	main07 [label = "Transmit Sensor\nData to Leader"];
+	
+	main08 [shape = "box", style = ""];
+	main03 -> main08 [label = "true"];
+	main08 [label = "Load Environment Map,\nAgents, Objects"];
+	
+	main09 [shape = "box", style = ""];
+	main08 -> main09;
+	main09 [label = "Assign Agents\nto Objects"];
+	
+	main10 [shape = "box", style = ""];
+	main09 -> main10;
+	main10 [label = "Build Configuration\nSpace of Object"];
+	
+	main10 -> end;
+	
+	{rank = sink; end}
+}
