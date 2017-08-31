@@ -17,11 +17,12 @@ link_directories(${catkin_LIBRARY_DIRS})
 add_message_files(DIRECTORY msg FILES
                   Color.msg Pose.msg)
 add_service_files(DIRECTORY srv FILES
-                  Kill.srv
-                  SetPen.srv
+                  #Kill.srv
+                  #SetPen.srv
                   Spawn.srv
-                  TeleportAbsolute.srv
-                  TeleportRelative.srv)
+                  #TeleportAbsolute.srv
+                  #TeleportRelative.srv
+                  Sensor.srv)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
 
 catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
@@ -43,8 +44,8 @@ add_executable(srmrvr_node ${turtlesim_node_SRCS} ${turtlesim_node_MOCS})
 target_link_libraries(srmrvr_node ${QT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(srmrvr_node turtlesim_gencpp)
 
-add_executable(turtle_autopilot src/turtle_autopilot.cpp)
-target_link_libraries(turtle_autopilot ${QT_LIBRARIES} ${catkin_LIBRARIES})
+#add_executable(turtle_autopilot src/turtle_autopilot.cpp)
+#target_link_libraries(turtle_autopilot ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
 add_executable(animate ${turtlesim_node_SRCS} ${turtlesim_node_MOCS})
 target_link_libraries(animate ${QT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -56,7 +57,7 @@ target_link_libraries(swarm_node ${catkin_LIBRARIES})
 #add_executable(agent src/agent.cpp)
 #target_link_libraries(agent ${catkin_LIBRARIES})
 
-install(TARGETS animate swarm_node srmrvr_node turtle_autopilot
+install(TARGETS animate swarm_node srmrvr_node #turtle_autopilot
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY images

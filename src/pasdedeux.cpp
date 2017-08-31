@@ -33,7 +33,7 @@ class PasDeDeux
 public:
 	void pollBooth(const geometry_msgs::Twist& voteMsg);
 	void actuate(const geometry_msgs::Twist& moveMsg);
-	void sense(geometry_msgs::Twist::Request& req, geometry_msgs::Twist::Response& res);
+	bool sense(pas_de_deux::Sensor::Request& req, pas_de_deux::Sensor::Response& res);
 	bool leader;
 	bool EnvMap[GRID_Y][GRID_X];
 	bool hCostInf[GRID_Y][GRID_X];
@@ -47,7 +47,7 @@ public:
 	ros::Publisher pb[NUM_AGT];
 	ros::Subscriber sb;
 	ros::ServiceClient cl[NUM_AGT];
-	ros::ServiceServer sv;
+	ros::ServiceServer sv[NUM_AGT];
 	ros::NodeHandle nh;	
 	bool paintWall;
 	float polls[NUM_AGT];	// Poll values	
@@ -103,6 +103,13 @@ public:
 		rcvdPolls[ROS_NODE_ID] = true;
 		std::cout << "Entering Poll Loop " << std::endl;
 		do {
+			synced = true;
+			for (i = 0; i < NUM_AGT; i++) {
+				if (syncSts[i] == false) {
+					synced = false;
+					break;
+				}
+			}
 			msg.linear.x = ROS_NODE_ID;
 			msg.linear.y = syncSts[ROS_NODE_ID] ? 1 : 0;
 			msg.linear.z = polls[ROS_NODE_ID];
@@ -114,14 +121,7 @@ public:
 					syncSts[ROS_NODE_ID] = false;
 					break;
 				}					
-			}
-			synced = true;
-			for (i = 0; i < NUM_AGT; i++) {
-				if (syncSts[i] == false) {
-					synced = false;
-					break;
-				}
-			}
+			}			
 			for (i = 0; i < NUM_AGT; i++)
 				std::cout << "Agent : " << i << "\tReceived : " << (rcvdPolls[i] ? 1 : 0) << "\tSynced : " << (syncSts[i] ? 1 : 0) << "\tPoll Value : " << polls[i] << std::endl;
 			std::cout << std::endl;
@@ -142,10 +142,12 @@ public:
 			std::cout << "Agent : " << i << "\tPoll Value : " << polls[i] << std::endl;
 		if (ROS_NODE_ID == leadNode) {
 			std::cout << "Node " << ROS_NODE_ID << " is the master" << std::endl;
-			return true;
+			//return true;
 		}
 		std::cout << "Node " << ROS_NODE_ID << " is a slave" << std::endl;
-		return false;			
+		//return false;		
+		if (ROS_NODE_ID == 1) return true;
+		else return false;	
 	}	
 	
 	// ############################################## @$ ##############################################
@@ -173,6 +175,7 @@ public:
 	void Adagio()
 	{
 		int i, j, k, n, agtrr;
+		float cmdT, cmdR;
 		bool solve = false;		
 		pose objTgt, err;
 		std::vector<int> agttrail[NUM_AGT];
@@ -200,11 +203,14 @@ public:
 		oss << "agt" << ROS_NODE_ID << "/msg_actuate";
 		sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
 		usleep(10000);
+		
 		for(i = 0; i < NUM_AGT; i++) {
 			oss.str("");
 			oss << "agt" << i << "/svc_sensor";
-			cl[i] = nh.advertiseService(oss.str(),&PasDeDeux::sense);
+			sv[i] = nh.advertiseService(oss.str(),&PasDeDeux::sense,this);
+			cl[i] = nh.serviceClient<pas_de_deux::Sensor>(oss.str());
 		}
+		
 		usleep(10000);
 		// std::cout << "Press Enter to Continue..." << std::endl;		
 		// getchar();		
@@ -247,13 +253,25 @@ public:
 					}
 					else if (agttrail[agtrr].size() != 0) {
 						err = estimateErr(&agt[agtrr]);
+						cmdT = 0;
+						cmdR = 0;
 						switch (agttrail[agtrr][0]) {
-							case MOVE_E		: translateObject(&agt[agtrr],actuateT(agtrr,senseWhlEnc(1-err.pos.x)),0);	break;
-							case MOVE_N		: translateObject(&agt[agtrr],0,-actuateT(agtrr,senseWhlEnc(1-err.pos.y)));	break;
-							case MOVE_W		: translateObject(&agt[agtrr],-actuateT(agtrr,senseWhlEnc(1-err.pos.x)),0);	break;
-							case MOVE_S		: translateObject(&agt[agtrr],0,actuateT(agtrr,senseWhlEnc(1-err.pos.y)));	break;
-							case TURN_C		: rotateObject(&agt[agtrr],actuateR(agtrr,-senseWhlEnc(1-err.ori)));		break;
-							case TURN_AC	: rotateObject(&agt[agtrr],actuateR(agtrr,senseWhlEnc(1-err.ori)));			break;
+							case MOVE_E		: cmdT = 1-err.pos.x;		break;
+							case MOVE_N		: cmdT = 1-err.pos.y;		break;
+							case MOVE_W		: cmdT = 1-err.pos.x;		break;
+							case MOVE_S		: cmdT = 1-err.pos.y;		break;
+							case TURN_C		: cmdR = -(1-err.ori);		break;
+							case TURN_AC	: cmdR = 1-err.ori;			break;
+						}
+						actuateCmd(agtrr,cmdT,cmdR);
+						senseWhlEnc(agtrr,&cmdT,&cmdR);
+						switch (agttrail[agtrr][0]) {
+							case MOVE_E		: translateObject(&agt[agtrr],cmdT,0);	break;
+							case MOVE_N		: translateObject(&agt[agtrr],0,-cmdT);	break;
+							case MOVE_W		: translateObject(&agt[agtrr],-cmdT,0);	break;
+							case MOVE_S		: translateObject(&agt[agtrr],0,cmdT);	break;
+							case TURN_C		: rotateObject(&agt[agtrr],cmdR);		break;
+							case TURN_AC	: rotateObject(&agt[agtrr],cmdR);		break;
 						}
 						printDebug();
 						std::cout << "\nObject " << n << " ";
@@ -467,9 +485,9 @@ private:
 			rotateObject(o,1);
 		}		
 	}
-
+	
 	// ############################################## @$ ##############################################
-
+						
 	void translateObject(object* o, float dx, float dy)
 	{
 		float i, j, k;
@@ -945,41 +963,30 @@ private:
 	}
 
 	// ############################################## @$ ##############################################
-	
-	float senseWhlEnc(float cmd)
+	void senseWhlEnc(int agtId, float* cmdT, float* cmdR)
 	{
 		// For wheel slipping, actual distance travelled is always less than commanded distance
-		float errfrac = 0.01;
-		return cmd - cmd*errfrac*(double(rand())/double(RAND_MAX));
+		std::cout << "Processing Sensor Data of Agent " << agtId << std::endl;
+		while (whlEnc[agtId][2] != 1)	// wait for dirty bit of agt to be set
+			ros::spinOnce();
+		*cmdT = whlEnc[agtId][1] + whlEnc[agtId][0];	// Translate 	:	L = cmd		R = cmd
+		*cmdR = whlEnc[agtId][1] - whlEnc[agtId][0];	// Rotate 		:	L = -cmd/2	R = cmd/2
+		whlEnc[agtId][2] = 0;	// reset dirty bit
+		//float errfrac = 0.01;
+		//return cmd - cmd*errfrac*(double(rand())/double(RAND_MAX));
 	}
 
 	// ############################################## @$ ##############################################
-	
-	float actuateT(int agtId, float cmd)
+
+	void actuateCmd(int agtId, float cmdT, float cmdR)
 	{
-		// wait for dirty bit of agt to be set
-		//while (whlEnc[agtId][2] == 0)
-		
-		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> (non-differential) value \t: " << cmd << std::endl;
-		msg.angular.z = 0;
-		msg.linear.x = cmd;
+		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> T : " << cmdT << "\tR : " << cmdR << std::endl;
+		msg.linear.x = cmdT;
+		msg.angular.z = cmdR;
 		pb[agtId].publish(msg);
 		usleep(10000);
-		return cmd;
 	}
-
-	// ############################################## @$ ##############################################
 	
-	float actuateR(int agtId, float cmd)
-	{
-		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> (differential) value \t: " << cmd;
-		msg.angular.z = cmd;
-		msg.linear.x = 0;
-		pb[agtId].publish(msg);
-		usleep(10000);
-		return cmd;
-	}	
-
 	// ############################################## @$ ##############################################
 
 	void frameWorld()
@@ -1180,25 +1187,37 @@ private:
 	
 	void PasDeDeux::actuate(const geometry_msgs::Twist& moveMsg)
 	{
-		if (moveMsg.linear.x == 0)
+		pas_de_deux::Sensor::Request req;
+		pas_de_deux::Sensor::Response res;
+		req.id = ROS_NODE_ID;
+		if (moveMsg.linear.x == 0) {
 			ROS_INFO_STREAM("Cmd Received : Rotate    = "<<moveMsg.angular.z);
-		else
+			req.left = -moveMsg.angular.z/2;
+			req.right = -moveMsg.angular.z/2;
+		}
+		else {
 			ROS_INFO_STREAM("Cmd Received : Translate = "<<moveMsg.linear.x);
+			req.left = moveMsg.angular.x;
+			req.right = moveMsg.angular.x;
+		}
 		// Translate command to PWM DC Motor signal duration here...
 		// Connect to Motor Driver here ...
 		//usleep(cmd*10000);	// Wait for actuation to get over
-		//cl[i] = nh.serviceClient<geometry_msgs::Twist>(oss.str());
-		
+		std::cout << "Sending Sensor readings to Leader..." << std::endl;
+		bool success = cl[ROS_NODE_ID].call(req,res);
+		std::cout << "Awaiting next motion command..." << std::endl;
 	}
 	
 	// ############################################## @$ ##############################################
 	
-	void PasDeDeux::sense(geometry_msgs::Twist::Request& req, geometry_msgs::Twist::Response& res)
+	bool PasDeDeux::sense(pas_de_deux::Sensor::Request& req, pas_de_deux::Sensor::Response& res)
 	{
 		// WATSON : Handle case where dirty bit is already set
-		whlEnc[(int)req.linear.x][0] = req.linear.y;
-		whlEnc[(int)req.linear.x][1] = req.linear.z;
-		whlEnc[(int)req.linear.x][2] = 1;	// Set Motion Dirty
+		std::cout << "Receiving Sensor readings from Agent " << req.id << std::endl;
+		whlEnc[req.id][0] = req.left;
+		whlEnc[req.id][1] = req.right;
+		whlEnc[req.id][2] = 1;	// Set Motion Dirty
+		return true;
 	}
 	
 	// ############################################## @$ ##############################################
