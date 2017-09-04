@@ -249,6 +249,7 @@ public:
 				selectDocks(&obj[n]);
 				filterDocks(n,objtrail[n][k]);
 				printDebug();
+				// Parallelize this loop
 				for (agtrr = 0; agtrr < NUM_AGT; agtrr++) {
 					if (!checkAssignment(agtrr,n))
 						continue;
@@ -1213,6 +1214,7 @@ private:
 		}
 		// Translate command to PWM DC Motor signal duration here...
 		// Connect to Motor Driver here ...
+		//	https://github.com/joan2937/pigpio
 		//usleep(cmd*10000);	// Wait for actuation to get over
 		//ros::ServiceClient::setTimeout = 1.0;
 		std::cout << "Sending Sensor readings to Leader : (L,R) = " << req.left << "," << req.right << std::endl;

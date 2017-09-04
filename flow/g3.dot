@@ -14,7 +14,7 @@ digraph {
 	
 	main03 [shape = "diamond", style = ""];
 	main02 -> main03;
-	main03 [label = "Is Leader?"];
+	main03 [label = "Agent is\nLeader?"];
 	
 	main04 [shape = "parallelogram", style = ""];
 	main03 -> main04 [label = "false"];
@@ -35,6 +35,7 @@ digraph {
 	
 	main08 [shape = "box", style = ""];
 	main03 -> main08 [label = "true"];
+	#edge [arrowhead=normal,arrowtail=dot];
 	main08 [label = "Load Environment Map,\nAgents, Objects"];
 	
 	main09 [shape = "box", style = ""];
@@ -45,7 +46,111 @@ digraph {
 	main09 -> main10;
 	main10 [label = "Build Configuration\nSpace of Object"];
 	
-	main10 -> end;
+	main11 [shape = "box", style = ""];
+	main10 -> main11;
+	main11 [label = "Plan Path to Target\nfor Object"];
+	
+	main12 [shape = "diamond", style = ""];
+	main11 -> main12;
+	main12 -> main99 [label = "false"];
+	main12 -> main13 [label = "true"];
+	main12 [label = "Path Exist?"];
+	
+	main13 [shape = "diamond", style = ""];
+	main13 -> main99 [label = "true"];
+	main13 [label = "Reached\nTarget?"];
+	
+	main14 [shape = "box", style = ""];
+	main13 -> main14 [label = "false"];
+	main14 [label = "Find Dockable Points\non Object"];
+	
+	main15 [shape = "box", style = ""];
+	main14 -> main15;
+	main15 [label = "Set Object Target\nto Next Path Step"];
+	
+	main16 [shape = "box", style = ""];
+	main15 -> main16;
+	main16 [label = "Select Optimal\nDocking Points\nfor Agents"];
+		
+	main17 [shape = "diamond", style = ""];
+	main16 -> main17;
+	main17 [label = "Agent Assigned\nto Object?"];
+	
+	main18 [shape = "box", style = ""];
+	main17 -> main18 [label = "true"];
+	main18 [label = "Build Configuration\nSpace of Agent"];
+	
+	main19 [shape = "box", style = ""];
+	main18 -> main19;
+	main19 [label = "Find Agent\nEnd Effectors"];
+	
+	main20 [shape = "box", style = ""];
+	main19 -> main20;
+	main20 [label = "Plan Path to Nearest\nDock for Agent"];
+	
+	main21 [shape = "diamond", style = ""];
+	main20 -> main21;
+	main21 [label = "Path\nExist?"];
+	
+	main22 [shape = "diamond", style = ""];
+	main17 -> main22 [label = "false"];
+	main21 -> main22 [label = "false"];
+	main22 [label = "Any more\nagent?"];
+	
+	main23 [shape = "diamond", style = ""];
+	main21 -> main23 [label = "true"];
+	main23 [label = "Path Command\nIssue Pending?"];
+	
+	main24 [shape = "box", style = ""];
+	main23 -> main24 [label = "true"];
+	main24 [label = "Estimate Error and\nAdjust Next Command"];
+	
+	main25 [shape = "box", style = ""];
+	main24 -> main25;
+	main25 [label = "Publish Command to\nRemote Agent Node"];
+	
+	main26 [shape = "box", style = ""];
+	main25 -> main26;
+	main26 [label = "Wait for Sensor\nData from Agent"];
+	
+	main27 [shape = "box", style = ""];
+	main26 -> main27;
+	main27 [label = "Calculate Pose Update\nfrom Sensor Data"];
+	
+	main28 [shape = "box", style = ""];
+	main27 -> main28;
+	main28 -> main23;
+	main28 [label = "Update Agent Pose in\nEnvironment Map"];
+	
+	main29 [shape = "box", style = ""];
+	main23 -> main29 [label = "false"];
+	main29 -> main22;
+	main29 [label = "Mark Agent as\nPush Active"];
+	
+	main22 -> main17 [label = "true"];
+	
+	main30 [shape = "diamond", style = ""];
+	main22 -> main30 [label = "false"];
+	main30 [label = "Object Docking\nComplete?"];
+	
+	main31 [shape = "box", style = ""];
+	main30 -> main31 [label = "true"];
+	main31 -> main13;
+	main31 [label = "Update Object in\nEnvironment Map"];
+	
+	main32 [shape = "box", style = ""];
+	main30 -> main32 [label = "false"];
+	main32 -> main13;
+	main32 [label = "Backtrack Object\nby one Step"];
+	
+	main25 -> main04 [arrowhead = onormal, style = dashed];
+	main07 -> main26 [arrowhead = onormal, style = dashed];
+	
+	main99 [shape = "parallelogram", style = ""];
+	main99 [label = "Display Run Stats\nand Shutdown Nodes"];
+	
+	main99 -> end;
 	
 	{rank = sink; end}
 }
+# dot -Tpng -o graph.png g3.dot
