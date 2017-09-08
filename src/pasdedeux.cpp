@@ -978,7 +978,7 @@ private:
 		// For wheel slipping, actual distance travelled is always less than commanded distance
 		std::cout << "Processing Sensor Data of Agent " << agtId << std::endl;
 		while (whlEnc[agtId][2] != 1)	// wait for dirty bit of agt to be set
-			ros::spinOnce();
+			ros::spinOnce();			// Insert waiting time threshold before Slave is dropped here...
 		cmdT = (whlEnc[agtId][1]/2) + (whlEnc[agtId][0]/2);	// Translate 	:	L = cmd		R = cmd
 		cmdR = whlEnc[agtId][1] - whlEnc[agtId][0];			// Rotate 		:	L = -cmd/2	R = cmd/2
 		whlEnc[agtId][2] = 0;	// reset dirty bit

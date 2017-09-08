@@ -143,8 +143,8 @@ digraph {
 	main32 -> main13;
 	main32 [label = "Backtrack Object\nby one Step"];
 	
-	main25 -> main04 [arrowhead = onormal, style = dashed];
-	main07 -> main26 [arrowhead = onormal, style = dashed];
+	#main25 -> main04 [arrowhead = onormal, style = dashed];
+	#main07 -> main26 [arrowhead = onormal, style = dashed];
 	
 	main99 [shape = "parallelogram", style = ""];
 	main99 [label = "Display Run Stats\nand Shutdown Nodes"];
