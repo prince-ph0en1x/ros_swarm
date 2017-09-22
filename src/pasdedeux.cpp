@@ -100,7 +100,6 @@ public:
 	
 	static void _senseLeftCallback()
 	{
-		std::cout << "Enter LCB\n";
 		if (++eL_val >= eL_lim) {
 			digitalWrite(mL1,LOW);
 			digitalWrite(mL2,LOW);
@@ -111,7 +110,6 @@ public:
 	
 	static void _senseRightCallback()
 	{
-		std::cout << "Enter RCB\n";
 		if (++eR_val >= eR_lim) {
 			digitalWrite(mR1,LOW);
 			digitalWrite(mR2,LOW);
@@ -124,13 +122,18 @@ public:
 	{
 		eL_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
 		eR_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		std::cout << "L -- (" << eL_lim << "," << eR_lim << ") -- ";
 		eL_val = 0;
 		eR_val = 0;
 		digitalWrite(mL2,LOW);
 		digitalWrite(mR2,LOW);
 		digitalWrite(mL1,HIGH);
 		digitalWrite(mR1,HIGH);
-		while (eL_val < eL_lim || eR_val < eR_lim);
+		while (eL_val < eL_lim || eR_val < eR_lim) {
+			if (eL_val < eL_lim)	digitalWrite(mL1,HIGH);
+			if (eR_val < eR_lim)	digitalWrite(mR1,HIGH);
+		}
+		std::cout << "Encoder Motion Estimate = L : " << eL_val << "\tR : " << eR_val << "\tD : " << d << std::endl;
 	}
 
 	// ############################################## @$ ##############################################
@@ -139,13 +142,18 @@ public:
 	{
 		eL_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
 		eR_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		std::cout << "R -- (" << eL_lim << "," << eR_lim << ") -- ";
 		eL_val = 0;
 		eR_val = 0;
 		digitalWrite(mL1,LOW);
 		digitalWrite(mR1,LOW);
 		digitalWrite(mL2,HIGH);
 		digitalWrite(mR2,HIGH);
-		while (eL_val < eL_lim || eR_val < eR_lim);
+		while (eL_val < eL_lim || eR_val < eR_lim) {
+			if (eL_val < eL_lim)	digitalWrite(mL2,HIGH);
+			if (eR_val < eR_lim)	digitalWrite(mR2,HIGH);
+		}
+		std::cout << "Encoder Motion Estimate = L : " << eL_val << "\tR : " << eR_val << "\tD : " << d << std::endl;
 	}
 
 	// ############################################## @$ ##############################################
@@ -154,29 +162,38 @@ public:
 	{
 		eL_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
 		eR_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		std::cout << "B -- (" << eL_lim << "," << eR_lim << ") -- ";
 		eL_val = 0;
 		eR_val = 0;
 		digitalWrite(mL1,LOW);
 		digitalWrite(mR2,LOW);
 		digitalWrite(mL2,HIGH);
 		digitalWrite(mR1,HIGH);
-		while (eL_val < eL_lim || eR_val < eR_lim);
+		while (eL_val < eL_lim || eR_val < eR_lim) {
+			if (eL_val < eL_lim)	digitalWrite(mL2,HIGH);
+			if (eR_val < eR_lim)	digitalWrite(mR1,HIGH);
+		}
+		std::cout << "Encoder Motion Estimate = L : " << eL_val << "\tR : " << eR_val << "\tD : " << d << std::endl;
 	}
 
 	// ############################################## @$ ##############################################
 	
 	void front(float d)
 	{
-		std::cout << "Enter F\n";
 		eL_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
 		eR_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		std::cout << "F -- (" << eL_lim << "," << eR_lim << ") -- ";
 		eL_val = 0;
 		eR_val = 0;
 		digitalWrite(mL2,LOW);
 		digitalWrite(mR1,LOW);
 		digitalWrite(mL1,HIGH);
 		digitalWrite(mR2,HIGH);
-		while (eL_val < eL_lim || eR_val < eR_lim);
+		while (eL_val < eL_lim || eR_val < eR_lim) {
+			if (eL_val < eL_lim)	digitalWrite(mL1,HIGH);
+			if (eR_val < eR_lim)	digitalWrite(mR2,HIGH);
+		}
+		std::cout << "Encoder Motion Estimate = L : " << eL_val << "\tR : " << eR_val << "\tD : " << d << std::endl;
 	}
 	
 	// ############################################## @$ ##############################################
@@ -198,7 +215,7 @@ public:
 	// ############################################## @$ ##############################################
 	
 bool INTELLIGENT;	// true if agent has capability of leader processing
-bool MOBILE;		// true if agent has capability of slave actuation
+// bool MOBILE;		// true if agent has capability of slave actuation
 int ROS_NODE_ID;	// manual agent id assignment: 1-Alpha 2-Bravo 3-Charlie 4-Delta 5-Echo
 
 // Core class handling both distributed leader-election phase and centralized collaborative-pushing phase
@@ -405,12 +422,6 @@ public:
 		initAgents();	// initialize agents based on known map
 		printDebug();
 		assign();		// assign agent to objects
-		
-		c.front(5);
-		
-		
-		
-		return;
 		for (n = 0; n < NUM_OBJ; n++)	
 			buildCSpace(&obj[n]);	// build configuration space of each object
 		hCostInfAllow = true;		// allow learning of (object+agent) non-navigable paths in map
@@ -418,8 +429,10 @@ public:
 			objtrail[n] = pathObject(n);	// find A* path of object
 		hCostInfAllow = false;
 		for (n = 0; n < NUM_OBJ; n++) {
-			if (objtrail[n][0] == SKIP)		// no A* path found for object
+			if (objtrail[n][0] == SKIP) {		// no A* path found for object
+				std::cout << "No path found for object" << std::endl;
 				continue;
+			}
 			objTgt = obj[n].target;			// temporarily store object target, as intermediate targets will be just the next grid step
 			for (k = 0; k < objtrail[n].size();k++) {	// for each object movement step	
 				updateDocks(&obj[n]);		// find pushable points of object (not necessarily in direction of required motion)
@@ -437,11 +450,13 @@ public:
 				printDebug();
 				// IMPROVE IMP : Parallelize this loop - Multi-threading
 				for (agtrr = 0; agtrr < NUM_AGT; agtrr++) {
+					std::cout << "Agent " << agtrr << " assigned to " << agt[agtrr].asgnmnt << std::endl;
 					if (agt[agtrr].asgnmnt != n)	// check if agent is assigned to object
 						continue;
 					buildCSpace(&agt[agtrr]);		// build configuration space of agent
 					updateEndEfctr(&agt[agtrr]);	// IMPROVE : Merge functionality with updateDocks(&agt[agtrr]);
-					agttrail[agtrr] = pathAgent(agtrr,n);	// find A* path of agent to any filtered dock
+					agttrail[agtrr] = movesAgent(agtrr,pathAgent(agtrr,n));	// find A* path of agent to any filtered dock
+					printTrail(agttrail[agtrr]);
 					if (agttrail[agtrr].size() == 1 && agttrail[agtrr][0] == SKIP) {	// no A* path found for agent
 						continue;
 					}
@@ -449,6 +464,7 @@ public:
 						err = estimateErr(&agt[agtrr]);	// adjust for rounding error (real world vs grid world)
 						cmdT = 0;
 						cmdR = 0;
+						// take current orientation into account
 						switch (agttrail[agtrr][0]) {
 							case MOVE_E		: cmdT = 1-err.pos.x;		break;
 							case MOVE_N		: cmdT = 1-err.pos.y;		break;
@@ -457,10 +473,9 @@ public:
 							case TURN_C		: cmdR = -(1-err.ori);		break;
 							case TURN_AC	: cmdR = 1-err.ori;			break;
 						}
-						std::cout << "\033[2J\033[1;1H" << std::endl;	// clear screen
 						if (manhandle == 1) {
-							std::cout << "Continue after pose correction" << std::endl;		
-							getchar();	
+							std::cout << "Continue pose correction?" << std::endl;		
+							std::cin >> manhandle;
 						}
 						actuateCmd(agtrr,cmdT,cmdR);	// issue movement command to slave
 						senseWhlEnc(agtrr,cmdT,cmdR);	// sense wheel encoder to calculate actual command execution status - IMPROVE IMP : make this wait in a seperate thread and proceed with next agent commanding
@@ -556,11 +571,11 @@ private:
 		}
 		// IMPROVE : Automate by read from a map file
 		// define arena boundary
-		for (k = 0; k < GRID_Y; k++) {	// left right boundary wall
+		for (k = 0; k < GRID_X; k++) {	// left right boundary wall
 			EnvMap[0][k] = false;
 			EnvMap[GRID_Y-1][k] = false;
 		}
-		for (k = 0; k < GRID_X; k++) {	// top bottom boundary wall
+		for (k = 0; k < GRID_Y; k++) {	// top bottom boundary wall
 			EnvMap[k][0] = false;
 			EnvMap[k][GRID_X-1] = false;
 		}
@@ -619,8 +634,8 @@ private:
 				obj[o].p.pos.x += obj[o].pts[i].x;
 				obj[o].p.pos.y += obj[o].pts[i].y;
 			}
-			obj[o].p.pos.x /= obj[o].pts.size();
-			obj[o].p.pos.y /= obj[o].pts.size();
+			obj[o].p.pos.x = round(obj[o].p.pos.x/obj[o].pts.size());
+			obj[o].p.pos.y = round(obj[o].p.pos.y/obj[o].pts.size());
 			obj[o].p.ori = 0;	// default orientation (does not matter)
 			buildCSpace(&obj[o]);	// build configuration space
 			/*
@@ -632,16 +647,16 @@ private:
 			} while(!obj[o].cSpace[(int)round(th)][(int)round(y)][(int)round(x)]);
 			*/
 			// place object at known location
-			y = 8;
-			x = 2;
+			y = 9;
+			x = 4;
 			th = 0;
 			translateObject(&obj[o],x-obj[o].p.pos.x,y-obj[o].p.pos.y);
 			rotateObject(&obj[o],th);
 			obj[o].wgt = -1;			// weight is the number of agents required to push it. Object wt = -ve, Agent wt = +ve
 			obj[o].pushActive = false;	// agents are not in place to push object
 			// object's centroid target
-			obj[o].target.pos.x = 3;
-			obj[o].target.pos.y = 11;	
+			obj[o].target.pos.x = 4;
+			obj[o].target.pos.y = 12;	
 			obj[o].target.ori = 0;
 		}		
 	}
@@ -681,7 +696,7 @@ private:
 			agt[a].p.pos.x /= agt[a].pts.size();
 			
 			agt[a].dks.clear();
-			if (MOBILE)
+			if (a != 0)
 				agt[a].wgt = 1;
 			else
 				agt[a].wgt = 0;
@@ -711,17 +726,18 @@ private:
 				World[(int)round(agt[n].pts[i].y)][(int)round(agt[n].pts[i].x)] = false;
 		}
 		for (i = 0; i < o->pts.size(); i++)
-			World[(int)round(o->pts[i].y)][(int)round(o->pts[i].x)] = true && EnvMap[(int)round(o->pts[i].y)][(int)round(o->pts[i].x)];
+			World[(int)round(o->pts[i].y)][(int)round(o->pts[i].x)] = EnvMap[(int)round(o->pts[i].y)][(int)round(o->pts[i].x)];
 		for (i = 0; i < o->dks.size(); i++)
-			World[(int)round(o->dks[i].pos.y)][(int)round(o->dks[i].pos.x)] = true && EnvMap[(int)round(o->dks[i].pos.y)][(int)round(o->dks[i].pos.x)];
+			World[(int)round(o->dks[i].pos.y)][(int)round(o->dks[i].pos.x)] = EnvMap[(int)round(o->dks[i].pos.y)][(int)round(o->dks[i].pos.x)];
+		
 		for (deg = 0; deg < GRID_A; deg++) {
 			th = (int)floor(o->p.ori);
 			for (i = 0; i < GRID_Y; i++) {
 				for (j = 0; j < GRID_X; j++) {
 					o->cSpace[th][i][j] = true;
 					for (k = 0; k < o->pts.size(); k++) {
-						dx = j - o->p.pos.x + o->pts[k].x;
-						dy = i - o->p.pos.y + o->pts[k].y; 
+						dx = j - o->p.pos.x + round(o->pts[k].x);
+						dy = i - o->p.pos.y + round(o->pts[k].y); 
 						if (dx < 0 || dy < 0 || dx >= GRID_X || dy >= GRID_Y) {
 							o->cSpace[th][i][j] = false;
 							break;
@@ -800,6 +816,44 @@ private:
 	}
 
 	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
+	
+	std::vector<int> movesAgent(int agtId, std::vector<int> path)
+	{
+		int p, ori = agt[agtId].p.ori, rstep;
+		std::vector<int>::iterator pi;
+		
+		for (p = 0; p < path.size();p++) {
+			switch (path[p]) {
+				case MOVE_E	:	// fall through for ActionObj enum path[p] = 0
+				case MOVE_N	:	// fall through for ActionObj enum path[p] = 1
+				case MOVE_W	:	// fall through for ActionObj enum path[p] = 2
+				case MOVE_S	:	// fall through for ActionObj enum path[p] = 3
+								rstep = (int)std::fmod(ori-path[p]*GRID_A/4+GRID_A,GRID_A);
+								if (rstep == 0) {
+									break;
+								}
+								ori = (int)std::fmod(ori-rstep+GRID_A,GRID_A);
+								pi = path.begin()+p;
+								if (rstep < GRID_A/2) {
+									path.insert(pi,rstep,TURN_C);
+									p += rstep;
+								}
+								else {
+									path.insert(pi,GRID_A-rstep,TURN_AC);
+									p += GRID_A-rstep;
+								}								
+								break;
+				case TURN_C	:	ori = (int)std::fmod(ori-1+GRID_A,GRID_A);	break;
+				case TURN_AC:	ori = (int)std::fmod(ori+1+GRID_A,GRID_A);	break;
+				
+			}
+		}
+		//if (path[path.size()-1]== TURN_C || path[path.size()-1] == TURN_AC)
+		//		path.erase(path.end()-1);		// IMPROVE : Remove need for this in pathAgent
+		return path;
+	}
+	
 	// ############################################## @$ ##############################################
 	
 	bool checkGoal(object* o, pose p1, pose p2, pose nnp)
@@ -1176,6 +1230,7 @@ private:
 		// Dock N-Agents (N = obj.weight) --> NP-Complete Vertex Cover
 		// Best Docks (independent of N) --> Convex Hull Chan's Algorithm
 		// Special case 2 agents (0 enclosing area) --> Rotating Calipers
+		/*
 		int i,j, ii = 0, jj = 0;
 		for (i = 0; i < obj[objId].dks.size(); i++) {
 			for (j = 0; j < obj[objId].dks.size(); j++) {
@@ -1191,6 +1246,23 @@ private:
 				j--;
 				ii--;
 				jj--;
+			}
+		}
+		*/
+		// Special case 1 agent (midpoint, object rotation not possible) --> Nearest to centre
+		int i,j, ii = 0, jj = 0;
+		jj = distC(obj[objId].dks[0].pos,obj[objId].p.pos);
+		for (i = 0; i < obj[objId].dks.size(); i++) {
+			if (distC(obj[objId].dks[i].pos,obj[objId].p.pos) < jj) {
+				ii = i;
+				jj = distC(obj[objId].dks[i].pos,obj[objId].p.pos);
+			}
+		}
+		for (j = 0; j < obj[objId].dks.size(); j++) {
+			if (j != ii) {
+				obj[objId].dks.erase(obj[objId].dks.begin()+j);
+				j--;
+				ii--;
 			}
 		}
 	}
@@ -1278,9 +1350,9 @@ private:
 		for (i = 0; i < GRID_Y; i++) {
 			for (j = 0; j < GRID_X; j++) {
 				if (o->cSpace[th][i][j])
-					std::cout << " v";
+					std::cout << " .";
 				else
-					std::cout << " x";
+					std::cout << "HH";
 			}
 			std::cout << std::endl;
 		}
@@ -1417,16 +1489,19 @@ private:
 		std::cout << "Processing Sensor Data of Agent " << agtId << std::endl;
 		while (whlEnc[agtId][2] != 1)	// wait for dirty bit of agt to be set
 			ros::spinOnce();			// IMPROVE : Insert waiting time threshold before Slave is dropped here...
+		std::cout << "\033[2J\033[1;1H" << std::endl;	// clear screen
 		if (cmdR == 0) {	// translation command
 			cmdT = ((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*(c.diaWhl*M_PI)/(2*c.eSpok*SCALE);
 			cmdR = ((whlEnc[agtId][0]-whlEnc[agtId][1])/2)*(c.diaWhl*2*M_PI)/(2*c.eSpok*c.diaAgt*SCALE);
 		}
 		else { 			// rotation command
 			cmdT = ((whlEnc[agtId][0]-whlEnc[agtId][1])/2)*(c.diaWhl*M_PI)/(2*c.eSpok*SCALE);
-			cmdR = ((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*(c.diaWhl*2*M_PI)/(2*c.eSpok*c.diaAgt*SCALE);	
+			if (cmdR > 0)
+				cmdR = ((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*c.diaWhl*GRID_A/(2*c.eSpok*c.diaAgt);
+			else
+				cmdR = -((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*c.diaWhl*GRID_A/(2*c.eSpok*c.diaAgt);
 		}
 		whlEnc[agtId][2] = 0;	// reset dirty bit
-		std::cout << "World Map Update inside : T " << cmdT << "\tR : " << cmdR << std::endl;
 	}
 	
 	// ############################################## @$ ##############################################
@@ -1444,17 +1519,20 @@ private:
 			if (moveMsg.angular.z > 0) 
 				c.left(moveMsg.angular.z * 2 * M_PI / GRID_A);
 			else
-				c.right(moveMsg.angular.z * 2 * M_PI / GRID_A);
+				c.right(abs(moveMsg.angular.z) * 2 * M_PI / GRID_A);
 		}
 		else {
 			ROS_INFO_STREAM("Cmd Received : Translate = " << moveMsg.linear.x);
+			ROS_INFO_STREAM("Scale = " << SCALE);
 			c.front(moveMsg.linear.x * SCALE);
 		}
 		
-		std::cout << "Sending Sensor readings to Leader : (L,R) = " << req.left << "," << req.right << std::endl;
+		req.left = control::eL_val;
+		req.right = control::eR_val;
+		std::cout << "Sending Sensor readings to Leader : (L,R) = " << control::eL_val << "," << control::eR_val << std::endl;
 		if (!leader)	success = cl.call(req,res);
 		else			success = sense(req,res);
-		std::cout << "Awaiting next motion command... " << (success ? 1 : 0) << std::endl;
+		std::cout << "Success? " << (success ? "true" : "false")  << "\nAwaiting next motion command... " << std::endl;
 	}
 	
 	// ############################################## @$ ##############################################
@@ -1463,8 +1541,8 @@ private:
 	{
 		// WATSON : Handle case where dirty bit is already set
 		std::cout << "Receiving Sensor readings from Agent " << req.id << std::endl;
-		whlEnc[req.id][0] = c.eL_val;
-		whlEnc[req.id][1] = c.eR_val; 
+		whlEnc[req.id][0] = req.left;
+		whlEnc[req.id][1] = req.right;
 		whlEnc[req.id][2] = 1;	// Set Motion Dirty
 		return true;
 	}
@@ -1494,10 +1572,6 @@ private:
 		oss << "pasdedeux" << ROS_NODE_ID;
 		ros::init(argc, argv, oss.str());
 		INTELLIGENT = true;
-		if (ROS_NODE_ID == 0)
-			MOBILE = false;
-		else
-			MOBILE = true;
 		PasDeDeux pdd(argc, argv);
 		if (pdd.leader)
 			pdd.Adagio();
