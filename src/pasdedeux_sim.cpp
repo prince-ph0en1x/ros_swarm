@@ -1,15 +1,14 @@
 /**
  * \file pasdedeux.cpp
- * \legacy 'pasdedeux_sim.cpp'
+ * \legacy '9 - PasDeDeuxSense.cpp'
  * 
  * \author Aritra Sarkar
- * \date 03-10-2017 (begin)
+ * \date 16-08-2017 (begin)
  */
 
 #include "pasdedeux.h"
 
-
-enum EnvStates {	// for printWorld grid map display
+enum EnvStates {
 	EMPTY		= 0, 
 	OBSTACLE	= 1, 
 	AGENT		= 2, 
@@ -23,10 +22,11 @@ enum EnvStates {	// for printWorld grid map display
 	AGENTCG		= 10,	
 };
 
-bool INTELLIGENT;	// true if agent has capability of leader processing
-int ROS_NODE_ID;	// manual agent id assignment: 1-Alpha 2-Bravo 3-Charlie 4-Delta 5-Echo
+bool INTELLIGENT;
+int ROS_NODE_ID;
 
-// Core class handling both distributed leader-election phase and centralized collaborative-pushing phase
+
+	
 class PasDeDeux
 {
 
@@ -186,7 +186,12 @@ public:
 		std::vector<int> objtrail[NUM_OBJ];
 		std::vector<int> objtrailBkup, objtrailNew;		
 		tick = 0;
-		
+		for (i = 0; i < GRID_Y; i++) {
+			for (j = 0; j < GRID_X; j++) {
+				EnvMap[i][j] = true;
+				hCostInf[i][j] = false;
+			}
+		}
 		initWall();
 		std::cout << "Number of Objects simulated = " << NUM_OBJ << std::endl;
 		std::cout << "Number of Agents simulated = " << NUM_AGT << std::endl;		
@@ -350,26 +355,26 @@ private:
 
 	void initWall()
 	{
-		int i, j, k;
-		for (i = 0; i < GRID_Y; i++) {
-			for (j = 0; j < GRID_X; j++) {
-				EnvMap[i][j] = true;		// make entire map navigable
-				hCostInf[i][j] = false;		// make all free cells accessable with no extra cost for agent occupation while pushing
-			}
-		}
-		
-		
-		for (k = 0; k < GRID_Y; k++) {	// left right boundary wall
+		int k;
+		for (k = 0; k < GRID_X; k++) {
 			EnvMap[0][k] = false;
 			EnvMap[GRID_Y-1][k] = false;
 		}
-		for (k = 0; k < GRID_X; k++) {	// top bottom boundary wall
+		for (k = 0; k < GRID_Y; k++) {
 			EnvMap[k][0] = false;
 			EnvMap[k][GRID_X-1] = false;
 		}
-		EnvMap[2][1] = false;
-		
-		paintWall = true;	// for Qt FrameWorld paint wall first time, then update only turtles/agents
+		for (k = 2; k < GRID_X; k++) {
+			EnvMap[8][k] = false;
+		}
+		EnvMap[8][7] = true;
+		EnvMap[8][8] = true;
+		EnvMap[8][9] = true;
+		EnvMap[8][GRID_X-3] = true;
+		EnvMap[8][GRID_X-4] = true;
+		EnvMap[8][GRID_X-5] = true;
+		EnvMap[4][7] = false;
+		paintWall = true;
 	}
 
 	// ############################################## @$ ##############################################
