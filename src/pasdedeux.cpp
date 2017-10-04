@@ -6,8 +6,22 @@
  * \date 03-10-2017 (begin)
  */
 
+/*
+ * Execution Steps:
+ * 
+ * cd ~/Desktop/Aritra/swarm/
+ * catkin_make
+ * roscore
+ * rosrun pas_de_deux swarm_node 0
+ * rosrun pas_de_deux swarm_node 1
+ * 
+ */
+
 #include "pasdedeux.h"
 
+
+#define HI 1
+#define LO 0
 
 enum EnvStates {	// for printWorld grid map display
 	EMPTY		= 0, 
@@ -22,8 +36,169 @@ enum EnvStates {	// for printWorld grid map display
 	POC			= 9,
 	AGENTCG		= 10,	
 };
+	
+	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
+	
 
+	
+class control
+{
+	
+public:
+
+	static int mL1, mL2, mR2, mR1;	// motors
+	
+	static int eL, eR;				// encoders
+	static int eL_val, eR_val;
+	static int eL_lim, eR_lim;
+
+	int diaWhl, diaAgt;
+	int eSpok;
+
+	// ############################################## @$ ##############################################
+	
+	void init()
+	{
+					//	J8		WPi		BCM		WireColour
+					
+		mL1 = 21;	//	29		21		5		black
+		mL2 = 22;	//	31		22		6		white
+		mR2 = 25;	//	35		25		26		red
+		mR1 = 24;	//	37		24		19		brown
+
+		eL = 3;		//	15		3		22		grey	(black-gnd white-vcc)
+		eR = 8;		//	3		8		2		yellow	(black-gnd white-vcc)
+
+		diaWhl = 5;		// cm
+		diaAgt = 16;	// cm
+		eSpok = 30;		// no. of triggers of each state (0,1) is eSpok
+		
+		eL_lim = 0;
+		eR_lim = 0;
+		eL_val = 0;
+		eR_val = 0;
+		
+		wiringPiSetup();	
+
+		pinMode(mL1,OUTPUT);	
+		pinMode(mL2,OUTPUT);
+		pinMode(mR1,OUTPUT);
+		pinMode(mR2,OUTPUT);
+
+		pinMode(eL,INPUT);	
+		pinMode(eR,INPUT);
+
+		pullUpDnControl(eL,PUD_UP);	// pull up is needed as encoder common is grounded	
+		pullUpDnControl(eR,PUD_UP);		
+
+		wiringPiISR(eL,INT_EDGE_BOTH,_senseLeftCallback);
+		wiringPiISR(eR,INT_EDGE_BOTH,_senseRightCallback);	
+	}
+
+	// ############################################## @$ ##############################################
+	
+	static void _senseLeftCallback()
+	{
+		std::cout << "Enter LCB\n";
+		if (++eL_val >= eL_lim) {
+			digitalWrite(mL1,LOW);
+			digitalWrite(mL2,LOW);
+		}
+	}
+
+	// ############################################## @$ ##############################################
+	
+	static void _senseRightCallback()
+	{
+		std::cout << "Enter RCB\n";
+		if (++eR_val >= eR_lim) {
+			digitalWrite(mR1,LOW);
+			digitalWrite(mR2,LOW);
+		}
+	}
+
+	// ############################################## @$ ##############################################
+	
+	void left(float d)
+	{
+		eL_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		eR_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		eL_val = 0;
+		eR_val = 0;
+		digitalWrite(mL2,LOW);
+		digitalWrite(mR2,LOW);
+		digitalWrite(mL1,HIGH);
+		digitalWrite(mR1,HIGH);
+		while (eL_val < eL_lim || eR_val < eR_lim);
+	}
+
+	// ############################################## @$ ##############################################
+	
+	void right(float d)
+	{
+		eL_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		eR_lim = 2*eSpok*((float)diaAgt*d/(diaWhl*2*M_PI)); 
+		eL_val = 0;
+		eR_val = 0;
+		digitalWrite(mL1,LOW);
+		digitalWrite(mR1,LOW);
+		digitalWrite(mL2,HIGH);
+		digitalWrite(mR2,HIGH);
+		while (eL_val < eL_lim || eR_val < eR_lim);
+	}
+
+	// ############################################## @$ ##############################################
+	
+	void back(float d)
+	{
+		eL_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		eR_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		eL_val = 0;
+		eR_val = 0;
+		digitalWrite(mL1,LOW);
+		digitalWrite(mR2,LOW);
+		digitalWrite(mL2,HIGH);
+		digitalWrite(mR1,HIGH);
+		while (eL_val < eL_lim || eR_val < eR_lim);
+	}
+
+	// ############################################## @$ ##############################################
+	
+	void front(float d)
+	{
+		std::cout << "Enter F\n";
+		eL_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		eR_lim = 2*eSpok*((float)d/(diaWhl*M_PI));
+		eL_val = 0;
+		eR_val = 0;
+		digitalWrite(mL2,LOW);
+		digitalWrite(mR1,LOW);
+		digitalWrite(mL1,HIGH);
+		digitalWrite(mR2,HIGH);
+		while (eL_val < eL_lim || eR_val < eR_lim);
+	}
+	
+	// ############################################## @$ ##############################################
+	
+	void stop()
+	{
+		digitalWrite(mL2,LOW);
+		digitalWrite(mL1,LOW);
+		digitalWrite(mR1,LOW);
+		digitalWrite(mR2,LOW);
+	}
+};
+	
+	int control::mL1, control::mL2, control::mR1, control::mR2;
+	int control::eL, control::eR;
+	int control::eL_val, control::eR_val, control::eL_lim, control::eR_lim;
+	
+	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
+	
 bool INTELLIGENT;	// true if agent has capability of leader processing
+bool MOBILE;		// true if agent has capability of slave actuation
 int ROS_NODE_ID;	// manual agent id assignment: 1-Alpha 2-Bravo 3-Charlie 4-Delta 5-Echo
 
 // Core class handling both distributed leader-election phase and centralized collaborative-pushing phase
@@ -31,10 +206,11 @@ class PasDeDeux
 {
 
 public:
-	void pollBooth(const geometry_msgs::Twist& voteMsg);
+	void pollBooth(const geometry_msgs::Twist& voteMsg);	// save votes
 	void actuate(const geometry_msgs::Twist& moveMsg);
 	bool sense(pas_de_deux::Sensor::Request& req, pas_de_deux::Sensor::Response& res);
-	bool leader;
+	bool leader;	// is the program instance simulating the leader
+	bool mobile;	// is the leader mobile or standalone server
 	bool EnvMap[GRID_Y][GRID_X];
 	bool hCostInf[GRID_Y][GRID_X];
 	object obj[NUM_OBJ];
@@ -54,19 +230,26 @@ public:
 	bool syncSts[NUM_AGT];	// Global poll sync status
 	bool rcvdPolls[NUM_AGT];// Local poll sync status
 	float whlEnc[NUM_AGT][3];	// Left(0), Right(1) and Dirty Bit(2) for Wheel Encoder Reading
-				
+	control c;
+			
 	// ############################################## @$ ##############################################
 
 	PasDeDeux(int argc, char** argv)
 	{
 		srand(time(0));
-		leader = electLeader();
+		// TESTMODE : leader = electLeader();
+		if (ROS_NODE_ID == 0)
+			leader = true;
+		else
+			leader = false;		
 		msg.angular.z = 0;
 		msg.linear.x = 0;
+		c.init();
 	}	
 	
 	// ############################################## @$ ##############################################
-
+	// ############################################## @$ ##############################################
+	
 	bool electLeader()
 	{
 		/* array = [index = agtId][random polled value][received?][synced?]
@@ -151,7 +334,8 @@ public:
 	}	
 	
 	// ############################################## @$ ##############################################
-
+	// ############################################## @$ ##############################################
+	
 	void Waltz()
 	{	
 		// Publish sensor data
@@ -178,13 +362,13 @@ public:
 
 	void Adagio()
 	{
-		int i, j, k, n, agtrr;
+		int i, j, k, n, agtrr, manhandle;
 		float cmdT, cmdR;
-		bool solve = false;		
 		pose objTgt, err;
 		std::vector<int> agttrail[NUM_AGT];
 		std::vector<int> objtrail[NUM_OBJ];
 		std::vector<int> objtrailBkup, objtrailNew;		
+		bool solve = false;		
 		tick = 0;
 		
 		initWall();
@@ -214,26 +398,33 @@ public:
 		cl = nh.serviceClient<pas_de_deux::Sensor>(oss.str());
 		usleep(10000);
 
-		// std::cout << "Press Enter to Continue..." << std::endl;		
-		// getchar();		
-		initObjects();
-		initAgents();
+		std::cout << "Enter 1 for Stepwise Manual Correction Mode" << std::endl;
+		std::cin >> manhandle;
+		
+		initObjects();	// initialize objects based on known map
+		initAgents();	// initialize agents based on known map
 		printDebug();
-		assign();
+		assign();		// assign agent to objects
+		
+		c.front(5);
+		
+		
+		
+		return;
 		for (n = 0; n < NUM_OBJ; n++)	
-			buildCSpace(&obj[n]);
-		hCostInfAllow = true;
+			buildCSpace(&obj[n]);	// build configuration space of each object
+		hCostInfAllow = true;		// allow learning of (object+agent) non-navigable paths in map
 		for (n = 0; n < NUM_OBJ; n++)				
-			objtrail[n] = pathObject(n);
+			objtrail[n] = pathObject(n);	// find A* path of object
 		hCostInfAllow = false;
 		for (n = 0; n < NUM_OBJ; n++) {
-			if (objtrail[n][0] == SKIP)
-				break;
-			objTgt = obj[n].target;
-			for (k = 0; k < objtrail[n].size();k++) {	// For Each Object Movement Frame	
-				updateDocks(&obj[n]);
-				obj[n].target = obj[n].p;
-				switch (objtrail[n][k]) {
+			if (objtrail[n][0] == SKIP)		// no A* path found for object
+				continue;
+			objTgt = obj[n].target;			// temporarily store object target, as intermediate targets will be just the next grid step
+			for (k = 0; k < objtrail[n].size();k++) {	// for each object movement step	
+				updateDocks(&obj[n]);		// find pushable points of object (not necessarily in direction of required motion)
+				obj[n].target = obj[n].p;	// set next grid step as target
+				switch (objtrail[n][k]) {	// convert from motion step to coordinates
 					case MOVE_E		:	obj[n].target.pos.x++;	break;
 					case MOVE_N		: 	obj[n].target.pos.y--;	break;
 					case MOVE_W		: 	obj[n].target.pos.x--;	break;
@@ -241,21 +432,21 @@ public:
 					case TURN_C		: 	obj[n].target.ori = std::fmod(obj[n].target.ori-1+GRID_A,GRID_A);	break;
 					case TURN_AC	: 	obj[n].target.ori = std::fmod(obj[n].target.ori+1,GRID_A);	break;
 				}
-				selectDocks(&obj[n]);
-				filterDocks(n,objtrail[n][k]);
+				selectDocks(&obj[n]);			// select pushing points in required direction of motion
+				filterDocks(n,objtrail[n][k]);	// select best points equal to the number of agents
 				printDebug();
-				// Parallelize this loop
+				// IMPROVE IMP : Parallelize this loop - Multi-threading
 				for (agtrr = 0; agtrr < NUM_AGT; agtrr++) {
-					if (!checkAssignment(agtrr,n))
+					if (agt[agtrr].asgnmnt != n)	// check if agent is assigned to object
 						continue;
-					buildCSpace(&agt[agtrr]);
-					updateEndEfctr(&agt[agtrr]);	// WATSON : Merge functionality with updateDocks(&agt[agtrr]);
-					agttrail[agtrr] = pathAgent(agtrr,n);
-					if (agttrail[agtrr].size() == 1 && agttrail[agtrr][0] == SKIP) {
+					buildCSpace(&agt[agtrr]);		// build configuration space of agent
+					updateEndEfctr(&agt[agtrr]);	// IMPROVE : Merge functionality with updateDocks(&agt[agtrr]);
+					agttrail[agtrr] = pathAgent(agtrr,n);	// find A* path of agent to any filtered dock
+					if (agttrail[agtrr].size() == 1 && agttrail[agtrr][0] == SKIP) {	// no A* path found for agent
 						continue;
 					}
 					else if (agttrail[agtrr].size() != 0) {
-						err = estimateErr(&agt[agtrr]);
+						err = estimateErr(&agt[agtrr]);	// adjust for rounding error (real world vs grid world)
 						cmdT = 0;
 						cmdR = 0;
 						switch (agttrail[agtrr][0]) {
@@ -266,11 +457,15 @@ public:
 							case TURN_C		: cmdR = -(1-err.ori);		break;
 							case TURN_AC	: cmdR = 1-err.ori;			break;
 						}
-						std::cout << "\033[2J\033[1;1H" << std::endl;
-						actuateCmd(agtrr,cmdT,cmdR);
-						senseWhlEnc(agtrr,cmdT,cmdR);
+						std::cout << "\033[2J\033[1;1H" << std::endl;	// clear screen
+						if (manhandle == 1) {
+							std::cout << "Continue after pose correction" << std::endl;		
+							getchar();	
+						}
+						actuateCmd(agtrr,cmdT,cmdR);	// issue movement command to slave
+						senseWhlEnc(agtrr,cmdT,cmdR);	// sense wheel encoder to calculate actual command execution status - IMPROVE IMP : make this wait in a seperate thread and proceed with next agent commanding
 						std::cout << "World Map Update : T " << cmdT << "\tR : " << cmdR << std::endl;
-						switch (agttrail[agtrr][0]) {
+						switch (agttrail[agtrr][0]) {	// update local map based on actual agent motion
 							case MOVE_E		: translateObject(&agt[agtrr],cmdT,0);	break;
 							case MOVE_N		: translateObject(&agt[agtrr],0,-cmdT);	break;
 							case MOVE_W		: translateObject(&agt[agtrr],-cmdT,0);	break;
@@ -284,10 +479,10 @@ public:
 						agtrr--;
 						continue;
 					}
-					agt[agtrr].pushActive = true;										
+					agt[agtrr].pushActive = true;	// if agent reached dock, next step is pushing									
 				}
-				if (dockingComplete(n)) {
-					switch (objtrail[n][k]) {
+				if (dockingComplete(n)) {	// if all assigned agents are docked
+					switch (objtrail[n][k]) {	// move object to next grid
 						case MOVE_E		: translateObject(&obj[n],1,0);		break;
 						case MOVE_N		: translateObject(&obj[n],0,-1);	break;
 						case MOVE_W		: translateObject(&obj[n],-1,0);	break;
@@ -296,17 +491,18 @@ public:
 						case TURN_AC	: rotateObject(&obj[n],1);			break;
 					}
 					for (i = 0; i < NUM_AGT; i++) {
-						if (checkAssignment(i,n))
-							agt[i].pushActive = false;
+						if (agt[i].asgnmnt == n)
+							agt[i].pushActive = false;	// make all assigned agents to non pushing location for next step
 					}
-					if (k == objtrail[n].size()-1)
+					if (k == objtrail[n].size()-1)	// if object has reached the target
 						solve = true;
 				}
 				else {
-					hCostInf[(int)round(obj[n].p.pos.y)][(int)round(obj[n].p.pos.x)] = true;
+					hCostInf[(int)round(obj[n].p.pos.y)][(int)round(obj[n].p.pos.x)] = true;	// increase cost of current object location -- IMPROVE : different orientation different cost
 					objtrailBkup = objtrail[n];
 					obj[n].target = objTgt;	
 					hCostInfAllow = true;
+					// backtrace object motion to last path fork
 					do {	// handle k = 0
 						switch (objtrailBkup[--k]) {
 							case MOVE_E		: translateObject(&obj[n],-1,0);	break;
@@ -333,7 +529,7 @@ public:
 					continue;
 				}
 			}
-			obj[n].dks.clear();
+			obj[n].dks.clear();		// clear object docking points for next iteration
 		}
 		printDebug();
 		if (solve)
@@ -347,6 +543,7 @@ public:
 private:
 	
 	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
 
 	void initWall()
 	{
@@ -357,8 +554,8 @@ private:
 				hCostInf[i][j] = false;		// make all free cells accessable with no extra cost for agent occupation while pushing
 			}
 		}
-		
-		
+		// IMPROVE : Automate by read from a map file
+		// define arena boundary
 		for (k = 0; k < GRID_Y; k++) {	// left right boundary wall
 			EnvMap[0][k] = false;
 			EnvMap[GRID_Y-1][k] = false;
@@ -367,7 +564,31 @@ private:
 			EnvMap[k][0] = false;
 			EnvMap[k][GRID_X-1] = false;
 		}
+		// define obstacle islands
+		EnvMap[1][1] = false;
 		EnvMap[2][1] = false;
+		EnvMap[6][1] = false;
+		EnvMap[11][1] = false;
+		EnvMap[2][2] = false;
+		EnvMap[3][2] = false;
+		EnvMap[4][2] = false;
+		EnvMap[5][2] = false;
+		EnvMap[6][2] = false;
+		EnvMap[11][2] = false;
+		EnvMap[12][2] = false;
+		EnvMap[3][5] = false;
+		EnvMap[4][5] = false;
+		EnvMap[5][5] = false;
+		EnvMap[6][5] = false;
+		EnvMap[11][5] = false;
+		EnvMap[12][5] = false;
+		EnvMap[3][6] = false;
+		EnvMap[6][6] = false;
+		EnvMap[7][6] = false;
+		EnvMap[8][6] = false;
+		EnvMap[9][6] = false;
+		EnvMap[10][6] = false;
+		EnvMap[3][7] = false;
 		
 		paintWall = true;	// for Qt FrameWorld paint wall first time, then update only turtles/agents
 	}
@@ -376,12 +597,14 @@ private:
 	
 	void initObjects()
 	{
-		int i, j, o, szx = 5, szy = 3;
+		int i, j, o;
+		int szx = 2, szy = 2;	// object length and breadth
 		float x, y, th;
 		point z;
-		for (o = 0; o < NUM_OBJ; o++) {
-			obj[o].pts.clear();
-			obj[o].dks.clear();
+		for (o = 0; o < NUM_OBJ; o++) {	// initialize each object
+			// define object of specified size at origin
+			obj[o].pts.clear();	// clear any grid points belonging to object
+			obj[o].dks.clear();	// clear any dock points belonging to object
 			for (i = 0; i < szy; i++) {
 				for (j = 0; j < szx; j++) {
 					z.y = i;
@@ -389,6 +612,7 @@ private:
 					obj[o].pts.push_back(z);
 				}
 			}
+			// find object centroid
 			obj[o].p.pos.x = 0;
 			obj[o].p.pos.y = 0;
 			for (i = 0; i < obj[o].pts.size(); i++) {
@@ -397,19 +621,27 @@ private:
 			}
 			obj[o].p.pos.x /= obj[o].pts.size();
 			obj[o].p.pos.y /= obj[o].pts.size();
-			obj[o].p.ori = 0;
-			buildCSpace(&obj[o]);
+			obj[o].p.ori = 0;	// default orientation (does not matter)
+			buildCSpace(&obj[o]);	// build configuration space
+			/*
+			// find a random location where object can be placed without hinderance
 			do {
 				y = (int)round(GRID_Y * double(rand()) / double(RAND_MAX));
 				x = (int)round(GRID_X * double(rand()) / double(RAND_MAX));
 				th = 0;//(int)floor(GRID_A * double(rand()) / double(RAND_MAX));
 			} while(!obj[o].cSpace[(int)round(th)][(int)round(y)][(int)round(x)]);
+			*/
+			// place object at known location
+			y = 8;
+			x = 2;
+			th = 0;
 			translateObject(&obj[o],x-obj[o].p.pos.x,y-obj[o].p.pos.y);
 			rotateObject(&obj[o],th);
-			obj[o].wgt = -2;
-			obj[o].pushActive = false;
-			obj[o].target.pos.x = 13;
-			obj[o].target.pos.y = 2;
+			obj[o].wgt = -1;			// weight is the number of agents required to push it. Object wt = -ve, Agent wt = +ve
+			obj[o].pushActive = false;	// agents are not in place to push object
+			// object's centroid target
+			obj[o].target.pos.x = 3;
+			obj[o].target.pos.y = 11;	
 			obj[o].target.ori = 0;
 		}		
 	}
@@ -422,13 +654,23 @@ private:
 		point z;
 		for (a = 0; a < NUM_AGT; a++) {		
 			agt[a].pts.clear();
+			/*
 			do {
 				z.y = (GRID_Y/10) * double(rand()) / double(RAND_MAX);
 				z.x = (GRID_X/10) * double(rand()) / double(RAND_MAX);
 			} while(!EnvMap[(int)round(z.y)][(int)round(z.x)]);
+			*/
+			if (a == 0) {
+				z.y = 5;
+				z.x = 6;
+			}
+			else if (a == 1) {
+				z.y = 1;
+				z.x = 2;
+			}
 			agt[a].pts.push_back(z);
 
-			agt[a].p.ori = GRID_A * double(rand())/double(RAND_MAX);
+			agt[a].p.ori = 0; //GRID_A * double(rand())/double(RAND_MAX);
 			agt[a].p.pos.y = 0;
 			agt[a].p.pos.x = 0;
 			for (i = 0; i < agt[a].pts.size(); i++) {
@@ -439,12 +681,16 @@ private:
 			agt[a].p.pos.x /= agt[a].pts.size();
 			
 			agt[a].dks.clear();
-			agt[a].wgt = 1;
+			if (MOBILE)
+				agt[a].wgt = 1;
+			else
+				agt[a].wgt = 0;
 			agt[a].pushActive = false;
 			agt[a].asgnmnt = INFVAL;
 		}
 	}
 
+	// ############################################## @$ ##############################################
 	// ############################################## @$ ##############################################
 
 	void buildCSpace(object* o)
@@ -492,6 +738,7 @@ private:
 	}
 	
 	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
 						
 	void translateObject(object* o, float dx, float dy)
 	{
@@ -522,6 +769,7 @@ private:
 	}
 
 	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
 	
 	void assign()
 	{
@@ -542,15 +790,6 @@ private:
 
 	// ############################################## @$ ##############################################
 	
-	bool checkAssignment(int agtId, int objId)
-	{
-		if (agt[agtId].asgnmnt == objId)
-			return true;
-		return false;
-	}
-
-	// ############################################## @$ ##############################################
-	
 	bool dockingComplete(int objId)
 	{
 		for (int a = 0; a < NUM_AGT; a++) {
@@ -560,6 +799,7 @@ private:
 		return true;
 	}
 
+	// ############################################## @$ ##############################################
 	// ############################################## @$ ##############################################
 	
 	bool checkGoal(object* o, pose p1, pose p2, pose nnp)
@@ -804,7 +1044,8 @@ private:
 	}
 
 	// ############################################## @$ ##############################################
-
+	// ############################################## @$ ##############################################
+	
 	void updateEndEfctr(object* o)
 	{
 		int i, j, k;
@@ -955,44 +1196,6 @@ private:
 	}
 
 	// ############################################## @$ ##############################################
-	
-	pose estimateErr(object* o)
-	{
-		// Error = EstimatePose - ActualPose
-		// Error in range [0,0.5]
-		pose p;
-		p.pos.x = round(o->p.pos.x) - o->p.pos.x;
-		p.pos.y = round(o->p.pos.y) - o->p.pos.y;
-		p.ori = floor(o->p.ori) - o->p.ori;
-		return p;
-	}
-
-	// ############################################## @$ ##############################################
-	void senseWhlEnc(int agtId, float& cmdT, float& cmdR)
-	{
-		// For wheel slipping, actual distance travelled is always less than commanded distance
-		std::cout << "Processing Sensor Data of Agent " << agtId << std::endl;
-		while (whlEnc[agtId][2] != 1)	// wait for dirty bit of agt to be set
-			ros::spinOnce();			// Insert waiting time threshold before Slave is dropped here...
-		cmdT = (whlEnc[agtId][1]/2) + (whlEnc[agtId][0]/2);	// Translate 	:	L = cmd		R = cmd
-		cmdR = whlEnc[agtId][1] - whlEnc[agtId][0];			// Rotate 		:	L = -cmd/2	R = cmd/2
-		whlEnc[agtId][2] = 0;	// reset dirty bit
-		std::cout << "World Map Update inside : T " << cmdT << "\tR : " << cmdR << std::endl;
-		//float errfrac = 0.01;
-		//return cmd - cmd*errfrac*(double(rand())/double(RAND_MAX));
-	}
-
-	// ############################################## @$ ##############################################
-
-	void actuateCmd(int agtId, float cmdT, float cmdR)
-	{
-		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> T : " << cmdT << "\tR : " << cmdR << std::endl;
-		msg.linear.x = cmdT;
-		msg.angular.z = cmdR;
-		pb[agtId].publish(msg);
-		usleep(10000);
-	}
-	
 	// ############################################## @$ ##############################################
 
 	void frameWorld()
@@ -1178,19 +1381,58 @@ private:
 			printObject(n,true);
 		frameWorld();	// suppressed in Raspberry Pi
 	}
+	
+	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
+		
+	pose estimateErr(object* o)
+	{
+		// Error = EstimatePose - ActualPose
+		// Error in range [0,0.5]
+		pose p;
+		p.pos.x = round(o->p.pos.x) - o->p.pos.x;
+		p.pos.y = round(o->p.pos.y) - o->p.pos.y;
+		p.ori = floor(o->p.ori) - o->p.ori;
+		return p;
+	}
 
 	// ############################################## @$ ##############################################
-};
 
-	void PasDeDeux::pollBooth(const geometry_msgs::Twist& voteMsg)
+	void actuateCmd(int agtId, float cmdT, float cmdR)
 	{
-		rcvdPolls[(int)voteMsg.linear.x] = true;	
-		polls[(int)voteMsg.linear.x] = voteMsg.linear.z;
-		syncSts[(int)voteMsg.linear.x] = voteMsg.linear.y == 1 ? true : false;	
+		std::cout << "Communicate to Motor Driver of Agent "<< agtId << " --> T : " << cmdT << "\tR : " << cmdR << std::endl;
+		// commands are in number of grids in configuration space 3D matrix
+		msg.linear.x = cmdT;
+		msg.angular.z = cmdR;
+		pb[agtId].publish(msg);
+		usleep(10000);
 	}
 	
 	// ############################################## @$ ##############################################
 	
+	void senseWhlEnc(int agtId, float& cmdT, float& cmdR)
+	{
+		// for wheel slipping, actual distance travelled can be less than commanded distance
+		// for motor intertia, actual distance travelled can be more than commanded distance
+		std::cout << "Processing Sensor Data of Agent " << agtId << std::endl;
+		while (whlEnc[agtId][2] != 1)	// wait for dirty bit of agt to be set
+			ros::spinOnce();			// IMPROVE : Insert waiting time threshold before Slave is dropped here...
+		if (cmdR == 0) {	// translation command
+			cmdT = ((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*(c.diaWhl*M_PI)/(2*c.eSpok*SCALE);
+			cmdR = ((whlEnc[agtId][0]-whlEnc[agtId][1])/2)*(c.diaWhl*2*M_PI)/(2*c.eSpok*c.diaAgt*SCALE);
+		}
+		else { 			// rotation command
+			cmdT = ((whlEnc[agtId][0]-whlEnc[agtId][1])/2)*(c.diaWhl*M_PI)/(2*c.eSpok*SCALE);
+			cmdR = ((whlEnc[agtId][0]+whlEnc[agtId][1])/2)*(c.diaWhl*2*M_PI)/(2*c.eSpok*c.diaAgt*SCALE);	
+		}
+		whlEnc[agtId][2] = 0;	// reset dirty bit
+		std::cout << "World Map Update inside : T " << cmdT << "\tR : " << cmdR << std::endl;
+	}
+	
+	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################
+};
+
 	void PasDeDeux::actuate(const geometry_msgs::Twist& moveMsg)
 	{
 		bool success;
@@ -1198,20 +1440,17 @@ private:
 		pas_de_deux::Sensor::Response res;
 		req.id = ROS_NODE_ID;
 		if (moveMsg.linear.x == 0) {
-			ROS_INFO_STREAM("Cmd Received : Rotate    = "<<moveMsg.angular.z);
-			req.left = -moveMsg.angular.z/2;
-			req.right = moveMsg.angular.z/2;
+			ROS_INFO_STREAM("Cmd Received : Rotate    = " << moveMsg.angular.z);
+			if (moveMsg.angular.z > 0) 
+				c.left(moveMsg.angular.z * 2 * M_PI / GRID_A);
+			else
+				c.right(moveMsg.angular.z * 2 * M_PI / GRID_A);
 		}
 		else {
-			ROS_INFO_STREAM("Cmd Received : Translate = "<<moveMsg.linear.x);
-			req.left = moveMsg.linear.x;
-			req.right = moveMsg.linear.x;
+			ROS_INFO_STREAM("Cmd Received : Translate = " << moveMsg.linear.x);
+			c.front(moveMsg.linear.x * SCALE);
 		}
-		// Translate command to PWM DC Motor signal duration here...
-		// Connect to Motor Driver here ...
-		//	https://github.com/joan2937/pigpio
-		//usleep(cmd*10000);	// Wait for actuation to get over
-		//ros::ServiceClient::setTimeout = 1.0;
+		
 		std::cout << "Sending Sensor readings to Leader : (L,R) = " << req.left << "," << req.right << std::endl;
 		if (!leader)	success = cl.call(req,res);
 		else			success = sense(req,res);
@@ -1223,13 +1462,23 @@ private:
 	bool PasDeDeux::sense(pas_de_deux::Sensor::Request& req, pas_de_deux::Sensor::Response& res)
 	{
 		// WATSON : Handle case where dirty bit is already set
-		std::cout << "Receiving Sensor readings from Agent " << req.id << "\t L : " << req.left << "\t R : " << req.right << std::endl;
-		whlEnc[req.id][0] = req.left;
-		whlEnc[req.id][1] = req.right;
+		std::cout << "Receiving Sensor readings from Agent " << req.id << std::endl;
+		whlEnc[req.id][0] = c.eL_val;
+		whlEnc[req.id][1] = c.eR_val; 
 		whlEnc[req.id][2] = 1;	// Set Motion Dirty
 		return true;
 	}
 	
+	// ############################################## @$ ##############################################
+	
+	void PasDeDeux::pollBooth(const geometry_msgs::Twist& voteMsg)
+	{
+		rcvdPolls[(int)voteMsg.linear.x] = true;	
+		polls[(int)voteMsg.linear.x] = voteMsg.linear.z;
+		syncSts[(int)voteMsg.linear.x] = voteMsg.linear.y == 1 ? true : false;	
+	}
+
+	// ############################################## @$ ##############################################
 	// ############################################## @$ ##############################################
 
 	int main(int argc, char** argv)
@@ -1245,13 +1494,18 @@ private:
 		oss << "pasdedeux" << ROS_NODE_ID;
 		ros::init(argc, argv, oss.str());
 		INTELLIGENT = true;
+		if (ROS_NODE_ID == 0)
+			MOBILE = false;
+		else
+			MOBILE = true;
 		PasDeDeux pdd(argc, argv);
-		if (pdd.leader) {
+		if (pdd.leader)
 			pdd.Adagio();
-		}
-		else {
+		else
 			pdd.Waltz();
-		}
 		ros::shutdown();
 		return 1; 
 	}
+	
+	// ############################################## @$ ##############################################
+	// ############################################## @$ ##############################################

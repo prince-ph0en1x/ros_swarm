@@ -165,12 +165,37 @@ int main(int argc, char *argv[])
 		}
 	}
 	else {
-		int loop = 4;
+		int loop = 1;
+		float ad = -0.05, td = -1.7;
+		float cmdgap = 1.5;
 		while (loop > 0) {
 			//c.back(10);	// cm
 			//c.left(1.6);//M_PI/2);	// radians
-			c.front(10);
-			c.right(M_PI/2);
+			//c.right(3*M_PI);
+			//c.left(3*M_PI);
+			//c.front(10);
+			//c.right(M_PI/2);
+			
+			c.right(M_PI/2+ad);
+			time_sleep(cmdgap);
+			c.front(10+td);
+			time_sleep(cmdgap);
+			c.left(M_PI/2+ad);
+			time_sleep(cmdgap);
+			c.front(30+td);
+			time_sleep(cmdgap);
+			c.back(10+td);
+			time_sleep(cmdgap);
+			c.left(M_PI/2+ad);
+			time_sleep(cmdgap);
+			c.front(20+td);
+			time_sleep(cmdgap);
+			c.back(10+td);
+			time_sleep(cmdgap);
+			c.right(M_PI/2+ad);
+			time_sleep(cmdgap);
+			c.back(20+td);
+			
 			loop--;
 		}
 	}

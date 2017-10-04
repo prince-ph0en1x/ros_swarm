@@ -9,10 +9,13 @@
 #ifndef PAS_DE_DEUX_H
 #define PAS_DE_DEUX_H
 
+#include <pigpio.h>
+#include <wiringPi.h>
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include <math.h>
 #include <unistd.h>		// for usleep
 #include <string>
 #include <sstream>
@@ -33,6 +36,8 @@ const int GRID_SZ = Globals::GRID_SZ;
 
 const int NUM_OBJ = Globals::NUM_OBJ;
 const int NUM_AGT = Globals::NUM_AGT;
+
+const int SCALE = Globals::SCALE;
 
 const int SIM_DELAY = 10000;
 
