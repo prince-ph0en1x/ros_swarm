@@ -355,24 +355,18 @@ public:
 	
 	void Waltz()
 	{	
-		// Publish sensor data
-		if (leader) {
-			ros::spinOnce();
-		}
-		else {
-			std::ostringstream oss;
-			oss.str("");
-			oss << "agt" << ROS_NODE_ID << "/msg_actuate";
-			sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
-			usleep(10000);
-			oss.str("");
-			oss << "agt" << ROS_NODE_ID << "/svc_sensor";
-			cl = nh.serviceClient<pas_de_deux::Sensor>(oss.str());
-			usleep(10000);
-			std::cout << "ROS_NODE " << ROS_NODE_ID << " entering slave mode..." << std::endl;
-			ros::spin();
-			std::cout << "\nROS_NODE " << ROS_NODE_ID << " exiting slave mode..." << std::endl;
-		}
+		std::ostringstream oss;
+		oss.str("");
+		oss << "agt" << ROS_NODE_ID << "/msg_actuate";
+		sb = nh.subscribe(oss.str(),1,&PasDeDeux::actuate,this);
+		usleep(10000);
+		oss.str("");
+		oss << "agt" << ROS_NODE_ID << "/svc_sensor";
+		cl = nh.serviceClient<pas_de_deux::Sensor>(oss.str());
+		usleep(10000);
+		std::cout << "ROS_NODE " << ROS_NODE_ID << " entering slave mode..." << std::endl;
+		ros::spin();
+		std::cout << "\nROS_NODE " << ROS_NODE_ID << " exiting slave mode..." << std::endl;
 	}
 		
 	// ############################################## @$ ##############################################

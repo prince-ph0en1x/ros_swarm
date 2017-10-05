@@ -1,0 +1,51 @@
+digraph {
+    #label="\nPas de Deux\n(pasdedeux.cpp)\nLevel 1"
+
+    node[shape="box", style="rounded"]
+       start; 
+       #end;
+    
+	main01 [shape = "box", style = ""];
+	start -> main01;
+	main01 [label = "Set ROS_NODE_ID,\nINTELLIGENCE and\nSENSITIVE values"]
+	
+	main021 [shape = "box", style = ""];
+	main01 -> main021;
+	main021 [label = "Poll random value\nif INTELLIGENT"];
+	
+	main022 [shape = "parallelogram", style = ""];
+	main021 -> main022;
+	main022 [label = "Broadcast Poll value\nand Sync Status to\nother nodes"];
+	
+	main023 [shape = "parallelogram", style = ""];
+	main022 -> main023;
+	main023 [label = "Receive Poll values and\nSync Status from\nother nodes"];
+	
+	main024 [shape = "diamond", style = ""];
+	main023 -> main024;
+	main024 -> main022 [label = "false"];
+	main024 -> main02 [label = "true"];
+	main024 [label = "All\nSynced?"];
+	
+	main02 [shape = "box", style = ""];
+	main02 [label = "Elect Leader Node"];
+	
+	main03 [shape = "diamond", style = ""];
+	main02 -> main03;
+	main03 [label = "Agent is\nLeader?"];
+	
+	main04 [shape = "box", style = ""];
+	main03 -> main04 [label = "false"];
+	main04 [label = "Slave Algorithm"];
+	
+	main08 [shape = "box", style = ""];
+	main03 -> main08 [label = "true"];
+	#edge [arrowhead=normal,arrowtail=dot];
+	main08 [label = "Leader Algorithm"];
+	
+	
+	#main08 -> end;
+	
+	#{rank = sink; end}
+}
+# dot -Tpng -o graph4.png g4.dot

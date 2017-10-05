@@ -1,0 +1,29 @@
+digraph {
+    #label="\nPas de Deux\n(pasdedeux.cpp)\nLevel 1"
+
+    node[shape="box", style="rounded"]
+       start; 
+       #end;
+       	
+	main04 [shape = "parallelogram", style = ""];
+	start -> main04;
+	main04 [label = "Accept Motion Commands\nfrom Leader"];
+	
+	main041 [shape = "box", style = ""];
+	main04 -> main041;
+	main041 [label = "Convert from grid commands\nto encoder readings"];
+	
+	main05 [shape = "box", style = ""];
+	main041 -> main05;
+	main05 [label = "Issue Commands to\nMotor Driver"];
+	
+	main07 [shape = "parallelogram", style = ""];
+	main05 -> main07;
+	main07 -> main04;
+	main07 [label = "Transmit encoder\nreadings to Leader"];
+			
+	#main08 -> end;
+	
+	#{rank = sink; end}
+}
+# dot -Tpng -o graph4.png g4.dot
