@@ -1,0 +1,6 @@
+
+In computer science, any problem without a linear solution is an "AI problem".
+How many cats does it need to identify a Cat?
+
+
+The funniest quote of the day clearly goes to Ryan Adams from Harvard University, when he introduced a new name for a common machine learning ‘method’: grad student descent. He talked about a ‘meta-problem’ of machine learning: Most machine learning algorithms are sufficiently complex to give great results – if they are run with parameters that are adapted to the problem at hand. For example, to work with a neural network you have to choose the number of layers, the weight regularization, the layer size, which non-linearity, the batch size, the learning rate schedule, the stopping conditions… How do people choose these parameters? Mostly with ad hoc, black magic methods. One method, common in academia, is ‘grad student descent’ (a pun on gradient descent), in which a graduate student fiddles around with the parameters until it works. It’s kind of sad, but it’s so true!

@@ -1,0 +1,2 @@
+extern def god
+def extern dog god

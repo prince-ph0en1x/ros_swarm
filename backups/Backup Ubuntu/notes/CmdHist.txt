@@ -1,0 +1,362 @@
+tcs4a11@tcs4a11-hp-compaq-elite-8300-sff:~$ history
+    1  ls
+    2  pwd
+    3  sudo apt-get install flashplugin-installer
+    4  sudo apt-get update
+    5  clear
+    6  which javac
+    7  which gpp
+    8  which ls
+    9  which gcc
+   10  ifconfig
+   11  sudo apt-get update
+   12  sudo -H gedit /etc/profile.d/proxy.sh
+   13  sudo apt-get update
+   14  sudo -H gedit /etc/profile.d/proxy.sh
+   15  sudo apt-get update
+   16  sudo -H gedit /etc/profile.d/proxy.sh
+   17  sudo apt-get update
+   18  sudo -H gedit /etc/profile.d/proxy.sh
+   19  sudo apt-get update
+   20  sudo -H gedit /etc/profile.d/proxy.sh
+   21  sudo -H vi /etc/profile.d/proxy.sh
+   22  sudo apt-get update
+   23  gedit /etc/bash.bashrc
+   24  gedit /etc/bash.bashrc &
+   25  sudo -H gedit /etc/profile.d/proxy.sh
+   26  vi /etc/bash.bashrc
+   27  sudo -H gedit /etc/profile.d/proxy.sh
+   28  ping www.google.com
+   29  gedit /etc/profile
+   30  sudo gedit /etc/profile
+   31  sudo apt-get update
+   32  sudo gedit /etc/profile
+   33  sudo apt-get update
+   34  sudo apt-get update
+   35  sudo -H gedit /etc/profile.d/proxy.sh
+   36  clear
+   37  unum '@:!#$'
+   38  unum '@'
+   39  man cat
+   40  clear
+   41  sudo gedit /etc/apt/apt.conf
+   42  sudo apt-get update
+   43  sudo gedit /etc/apt/apt.conf
+   44  jobs
+   45  ps aux | grep apt
+   46  sudo apt-get update
+   47  ping www.google.com
+   48  sudo ping www.google.com
+   49  sudo apt-get default-jre
+   50  sudo apt-get install default-jre
+   51  sudo apt-get install default-jdk
+   52  which java
+   53  which javac
+   54  ls
+   55  cd Desktop/
+   56  ls
+   57  cd Aritra_Internship/
+   58  ls
+   59  cd javacodes/
+   60  ls
+   61  javac try1.java 
+   62  ls
+   63  java try1 
+   64  history
+   65  sudo gedit /etc/apt/apt.conf
+   66  sudo apt-get update
+   67  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+   68  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   69  sudo gedit /etc/apt/apt.conf
+   70  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   71  sudo gedit /etc/apt/apt.conf
+   72  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   73  sudo gedit /etc/apt/apt.conf
+   74  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   75  apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   76  sudo gedit /etc/sudoers
+   77  apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   78  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   79  sudo gedit /etc/sudoers
+   80  gedit /etc/sudoers
+   81  sudo gedit /etc/sudoers
+   82  history
+   83  sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+   84  sudo gedit /etc/apt/apt.conf
+   85  jobs
+   86  gnomesu gedit /etc/apt/apt.conf
+   87  sudo apt-get gnomesu install
+   88  sudo apt-get install gnomesu
+   89  kdesu gedit /etc/apt/apt.conf
+   90  xdg-su gedit /etc/apt/apt.conf
+   91  export DISPLAY=:0
+   92  sudo gedit /etc/apt/apt.conf
+   93  sudo apt-get update
+   94  sudo gedit /etc/sudoers
+   95  sudo vim /etc/sudoers
+   96  sudo apt-get install vim
+   97  sudo vim /etc/sudoers
+   98  which ros
+   99  which ros-kinetic
+  100  which ros-kinetic-roswtf
+  101  id
+  102  gksu-properties
+  103  sudo apt install libgksu2-0
+  104  gksu-properties
+  105  sudo apt-get update
+  106  sudo -H gedit /etc/apt/apt.conf
+  107  sudo -H vim /etc/apt/apt.conf
+  108  sudo apt-get update
+  109  sudo apt-get install ros-kinetic-desktop-full
+  110  apt-cache search ros-kinetic
+  111  sudo rosdep init
+  112  sudo apt-get install ros-kinetic-ros-base
+  113  gksu-properties
+  114  sudo apt-get install ros-kinetic-ros-base
+  115  sudo dpkg -i /home/tcs4a11/
+  116  sudo dpkg -i /home/tcs4a11/Desktop/ros-kinetic-ros-core_1.3.1-0xenial-20170613-195700-0800_amd64.deb 
+  117  sudo apt-get install ros-kinetic-ros-base
+  118  sudo apt-get -f install ros-kinetic-ros-base
+  119  sudo apt-get -f install
+  120  sudo software-properties-gtk
+  121  ls
+  122  sudo dpkg -i /home/tcs4a11/Desktop/ros-kinetic-roswtf_1.12.7-0xenial-20170613-195213-0800_amd64.deb 
+  123  sudo software-properties-gtk
+  124  sudo apt-get install ros-kinetic-ros-base
+  125  apt-get -f install
+  126  sudo apt-get -f install
+  127  sudo rosdep init
+  128  rosdep update
+  129  source /opt/ros/indigo/setup.bash
+  130  which roscore
+  131  roscore
+  132  sudo apt install python-roslaunch
+  133  sudo apt install python-roslib
+  134  sudo apt install catkin
+  135  sudo apt install python-catkin-pkg
+  136  sudo apt install catkin
+  137  cat /proc/cpuinfo
+  138  uname -a
+  139  lscpu
+  140  history
+  141  sudo apt-get install ros-kinetic-desktop-full
+  142  clear
+  143  sudo apt-get install ros-kinetic-desktop-full
+  144  jobs
+  145  sudo apt-get install ros-kinetic-desktop-full
+  146  rosrun turtlesim turtle_teleop_key
+  147  rosnode list
+  148  rosnode info teleop_turtle
+  149  rqt_graph
+  150  rosrun rqt_graph rqt_graph
+  151  rosrun rqt_graph rqt_graph &
+  152  rostopic -h
+  153  rostopic list
+  154  rostopic echo /turtle1/cmd_vel
+  155  rosmsg show turtlesim/Pose 
+  156  rosmsg show turtlesim/Color 
+  157  rosmsg show geometry_msgs/
+  158  rosmsg show geometry_msgs/Twist
+  159  rostopic -h
+  160  rostopic info /turtle1/cmd_vel /
+  161  rostopic info /turtle1/cmd_vel
+  162  rostopic hz /turtle1/cmd_vel
+  163  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist ’[2, 0, 0]’ ’[0, 0, 0]’
+  164  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist ’[2,0,0]’ ’[0,0,0]’
+  165  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist '[2,0,0]' '[0,0,0]'
+  166  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  167    x: -1.0
+  168    y: 0.0
+  169    z: 0.0
+  170  angular:
+  171    x: 0.0
+  172    y: 0.0
+  173    z: 0.0" 
+  174  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  175    x: -0.1
+  176    y: 0.0
+  177    z: 0.0
+  178  angular:
+  179    x: 0.0
+  180    y: 0.0
+  181    z: 0.0" 
+  182  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  183    x: -0.1
+  184    y: 0.0
+  185    z: 0.0
+  186  angular:
+  187    x: 0.0
+  188    y: 0.0
+  189    z: -0.2" 
+  190  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  191    x: -0.2
+  192    y: 0.0
+  193    z: 0.0
+  194  angular:
+  195    x: 0.0
+  196    y: 0.0
+  197    z: -0.2" 
+  198  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  199    x: 0.3
+  200    y: 0.0
+  201    z: 0.0
+  202  angular:
+  203    x: 0.0
+  204    y: 0.0
+  205    z: -0.2" 
+  206  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  207    x: 0.4
+  208    y: 0.0
+  209    z: 0.0
+  210  angular:
+  211    x: 0.0
+  212    y: 0.0
+  213    z: -0.2" 
+  214  rostopic pub -r 1 /turtle1/cmd_vel geometry_msgs/Twist "linear:
+  215    x: 0.6
+  216    y: 0.0
+  217    z: 0.0
+  218  angular:
+  219    x: 0.0
+  220    y: 0.0
+  221    z: -0.2" 
+  222  rosrun turtlesim turtle_teleop_key __name:=another
+  223  rosrun turtlesim turtle_teleop_key
+  224  rosls turtlesim/
+  225  rosls turtlesim/images/
+  226  rosln
+  227  rosls
+  228  rosrun turtlesim turtle_teleop_key
+  229  which ros
+  230  which roscore
+  231  rosrun turtlesim turtlesim_node
+  232  sudo apt-get install ros-kinetic-desktop-full
+  233  sudo apt-get update
+  234  sudo apt-get install ros-kinetic-desktop-full
+  235  history
+  236  sudo rosdep init
+  237  sudo rosdep delete
+  238  sudo rosdep init
+  239  history
+  240  rosdep update
+  241  which ros
+  242  which catkin
+  243  sudo apt-get install ros-indigo-turtlesim
+  244  sudo apt-get update
+  245  sudo apt-get install ros-indigo-turtlesim
+  246  sudo apt-get install ros-kinetic-turtlesim
+  247  echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+  248  source ~/.bashrc
+  249  sudo apt-get install python-rosinstall
+  250  which roscore
+  251  history
+  252  clear
+  253  roscore
+  254  rqt_graph
+  255  roswtf
+  256  ls
+  257  cd Desktop/Aritra_Internship/roscodes/hlwrld/src/
+  258  cd Desktop/Aritra_Internship/roscodes/src/
+  259  pwd
+  260  cd ..
+  261  ls
+  262  cd src
+  263  ls
+  264  catkin_create_pkg hlwrld
+  265  ls
+  266  cd hlwrld/
+  267  ls
+  268  catkin_make
+  269  cd ..
+  270  catkin_make
+  271  cd ..
+  272  ls
+  273  catkin_make
+  274  ls
+  275  source devel/setup.bash 
+  276  rosrun hlwrld hello 
+  277  roscore
+  278  source ~/Desktop/Aritra_Internship/roscodes/devel/setup.bash 
+  279  rosrun hlwrld hello 
+  280  rosrun hlwrld wander
+  281  source ~/Desktop/Aritra_Internship/roscodes/devel/setup.bash
+  282  rosrun hlwrld wander 
+  283  cd Desktop/Aritra_Internship/roscodes/
+  284  ls
+  285  catkin_make
+  286  rosrun hlwrld wander 
+  287  catkin_make
+  288  history
+  289  rosrun hlwrld shwpose 
+  290  rosrun turtlesim turtlesim_node 
+  291  source devel/setup.bash 
+  292  source ~/Desktop/Aritra_Internship/roscodes/devel/setup.bash 
+  293  ls
+  294  cd Desktop/
+  295  ls
+  296  cd Aritra_Internship/
+  297  ls
+  298  cd roscodes/
+  299  ls
+  300  catkin_make
+  301  catkin_make clean
+  302  catkin_make_clean
+  303  catkin_clean
+  304  catkin_make clean
+  305  catkin_make
+  306  catkin_make clean
+  307  catkin_make
+  308  roscore
+  309  source ~/Desktop/Aritra_Internship/roscodes/devel/setup.bash
+  310  rosrun hlwrld wander 
+  311  gedit ~/.bashrc
+  312  history
+  313  rosrun hlwrld wander 
+  314  rosrun turtlesim 
+  315  rosrun turtlesim turtlesim_node 
+  316  rqt_console
+  317  roscore
+  318  head ~/.ros/log/0920ab34-6d3c-11e7-92ed-b4b52fdf362a/
+  319  head ~/.ros/log/0920ab34-6d3c-11e7-92ed-b4b52fdf362a/rosout.log 
+  320  gedit ~/.ros/log/0920ab34-6d3c-11e7-92ed-b4b52fdf362a/rosout.log 
+  321  rosclean check
+  322  roslaunch hlwrld turtletry.launch
+  323  roslaunch ~/Desktop/Aritra_Internship/roscodes/src/hlwrld/turtletry.launch
+  324  roslaunch -v ~/Desktop/Aritra_Internship/roscodes/src/hlwrld/turtletry.launch
+  325  roslaunch -v ~/Desktop/Aritra_Internship/roscodes/src/turtletry.launch
+  326  rosparam list
+  327  rosparam get /rosdistro
+  328  rosparam get /
+  329  rosparam list
+  330  rosparam get /background_b
+  331  rosparam set /background_b 150
+  332  rosparam get /background_b
+  333  rosparam set /background_b 150
+  334  rosservice call /clear 
+  335  rosparam set /background_g 100
+  336  rosservice call /clear 
+  337  rosparam set /background_g 200
+  338  rosservice call /clear 
+  339  history
+  340  history -a
+  341  history
+  342  PROMPT
+  343  man prompt
+  344  rosparam list
+  345  roscore
+  346  rosrun turtlesim turtlesim_node 
+  347  sudo apt-get install python-catkin-tools
+  348  sudo apt-get install ros-indigo-turtlebot-gazebo
+  349  sudo apt-get install ros-kinetic-turtlebot-gazebo
+  350  sudo apt-get update
+  351  sudo apt-get install ros-kinetic-librealsense 
+  352  sudo apt-get install ros-kinetic-librealsense-camera
+  353  sudo apt-get install linux-headers-generic
+  354  sudo sh -c 'echo "deb-src http://us.archive.ubuntu.com/ubuntu/xenial main restricted deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-updates main restricted deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse deb-src http://security.ubuntu.com/ubuntu xenial-security main restricted" > \ /etc/apt/sources.list.d/official-source-repository.list'
+  355  ls /etc/apt/sources.list.d/
+  356  sudo sh -c 'echo "deb-src http://us.archive.ubuntu.com/ubuntu/xenial main restricted deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-updates main restricted deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse deb-src http://security.ubuntu.com/ubuntu xenial-security main restricted" > /etc/apt/sources.list.d/official-source-repository.list'
+  357  ls /etc/apt/sources.list.d/
+  358  sudo apt-get update
+  359  history
+  360  roscore
+  361  history

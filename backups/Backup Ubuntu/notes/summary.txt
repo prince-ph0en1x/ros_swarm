@@ -1,0 +1,120 @@
+ROS Framework
+
+	The development framework for the project is based on Robot Operating System (ROS).
+	It is an open-source, meta-operating system which enable roboticists to design software as a collection of small, mostly independent programs.
+	ROS provides the operating system services like hardware abstraction, low-level device control, implementation of commonly-used functionality, message-passing between processes, and package management.
+	It also provides tools and libraries for obtaining, building, writing, and running code across multiple computers.
+	The project is targeting towards a swarm of self-assembled agents based on Raspberry Pi 3, making ROS the default choice.
+
+Agents
+
+	The term 'agents' is used to refer to the processing entities capable of sensing the environment and actuating to create useful work based on intelligent decisions taken to achieve the global goal of the project.
+	Agent being a general term, can refer to a heterogeneous ensemble of units which may differ in
+	* actuation ability ranging from fixed processing unit with no actuation to fixed arm object manipulator, surface rover, bipeds to quadcopters.
+	* sensing capability may vary from dead reckoning to wheel encoder, GPS or visual odometry.
+	Each agent, being a physical entity has a unique position and orientation (hereafter collectively referred as 'pose'), and a geometric spacial distribution.
+
+Box-pushing
+
+	While the framework is general and can be adapted for any kind of collaboration activities among the agents, the specific activity demonstrated is of multi-rover box-pushing.
+	Box-pushing is an interesting problem as the environment is dynamically changing.
+	Since the agents themselves are responsible for the change, models for collaboration or competition in a multi-agent setting can be developed.
+	Needless to say, box-pushing involves as sub-problems some of the active domains of robotics like obstacle avoidance, goal approaching, maze solving, object caging, exploration, localization and mapping.
+	The boxes are refered as 'objects'.
+
+
+Continuous vs Discreet Object Specification
+
+	Objects can be specified in two distinctive ways.
+	The object bounds can be defined with a set of line equations (plane equations for 3D) of the polygonal bounds.
+	The object can otherwise be defined with a set of coordinates that are considered as part of the object.
+	Each of this method has it's advantage and disadvantage.
+
+	Untimately, the agents executes sensing and actuation commands in discreet time steps (global tick).
+	The discreet time commands directly imply that, for every command, a specific real value for motion needs to be calculated, which is based on the relative position of the agent and the object.
+	Solving a set of linear equations at every time step is a computationally complex operation.
+	Literature suggests, such a description is discreetized to the required resolution level before further calculation.
+	While for simple polygons, an equation approach greatly reduces the space complexity, arbitrary shapes can become quite complex, specially shapes like circular ring or horse-shoe shapes not only needs a polygonal approximation, but also needs other parameters to distinguish the inner and outer matter bounds.
+
+	A coordinate based approach on the other hand is a platonic extrapolation of an object consisting of elementary building blocks (plank space, to atoms to LEGO blocks).
+	The block used here is a cell, which can be visualized a one or more pixel coordinates on a map.
+	Each cell has a position (absolute or relative to the object's centre of mass).
+	Once a map is specified, increasing or decreasing the resolution might increase the error from the required object's geometry.
+	Rotating an object may increase or decrease the total number of cells in the map the object occupies.
+	To deal with this variation, each cell of the original object is rotated in a real space, and discreetized only for the visualization purpose.
+	Thus, two cell coordinates (1,0) and (2,0) of an object, on rotation about the centre of mass of the object, might become (1.2,1) and (1.4,1). While now both overlaps on the same pixel (1,1) for display, an inverse rotation on the individual cells will make them distinguishable again.
+	Another important aspect of a coordinate based approach is the ease in extending it not only for arbitary shapes, but also between 1D, 2D or 3D World.
+	However, the size of an object increases the cell datastructure considerably. While the size of any quadrilateral can be specified with 4 line equations, the number of container cells can quickly grow unmanagably if the object is big or the simulation is executed in a finer resolution.
+	In accordance with the elementary building block model, it is acceptable, and it is further supported as the heuristic algorithms like A* also limits the extent the resolution can be increased.
+	To reduce the computation, only the boundary cells of the object can be specified, and will have the same effect of the overall goal.
+	The specification of individual building blocks also allows two advantages.
+	One, the weight (and thus the effort or the number of agents required to manipulate it) can be directly inferred from the number of cells representing the (area in 2D, or volume in 3D).
+	Secondly, instead of a unit weight, each cell can have different weight (to reflect the material it is made of), thus opening up the possibility of a more realistic physics simulation of the manipulation  its planning.
+
+Core Algorithms
+
+	ROS Framework Algorithm:
+	1> Initiate ROS nodes on each agent
+	2> Elect Navigator (leader agent among agents posessing global map)
+	3> Other nodes enters listener mode
+	4> Navigator broadcasts global map
+	5> Navigator created agent-object allocation relation
+	6> Navigator calculates optimal path for each agent-object team
+	7> Navigator received sensor data from each agent
+	8> Navigator issues actuation commands for each agent
+	9> Continue till mission complete (optimally or sub-optimally)
+	10> If Navigator node dies or new node is added, go to step 2
+
+	Path Planning Algorithm for Team:
+	1> Find A* path of object
+	2> If no path exist, exit (fail)
+	3> For each step, check agent position valid
+	4> If not, continue to step 8
+	5> For each step, check agent path from (t-1) position exist by A*                                                       
+	6> If not, continue to step 8
+	7> Display valid path, exit (success)
+	8> Increase heuristic cost of object location at that step
+	9> Backtract object to last location and jump to step 1
+
+Neighbourhood and Docking
+
+	The neighbourhood for a grid are generally of two types.
+	The Moore neighbourhood of a cell are the 8 surrounding cells, while Von-Neumann neighbourhood are the 4 adjacent cells in the cardinal directions.
+	We have considered the Von-Neumann neighbourhood for the path planning algorithm state space exploration, the main reason being the symmetry between the cartisian distances and manhattan distances for each neighbours.
+	The neighbourhood of an object starts with the cells that form the Von-Neumann neighbours of the object cells.
+	This list is filtered such that only cells which allows a pushing vector in the direction of target motion/rotation remains.
+	Based on the weight of the object, the required number of agents are allocated to the objects.
+	Among the pushing points, the same number of optimal points are chosen as docking locations for each agent.
+	This is done with a rotating calipers algorithm for 2 agents (can be extended via convex hull algorithm).
+	The shortest path to reach the assigned docks are then calculated for each agent.
+
+Configuration Space
+
+	Configuration Space is a boolean 3D matrix for a 2D world (4D for a 3D World).
+	The row and column depicts the location where the object is allowed to be located without colliding with other obstacles and walls.
+	Each layer (the extra dimension) does this for various orientation of the object.
+	An object with point symmetry about it's centre of mass has all the layers as duplicate values.
+	The number of layers correspond to the angular resolution for rotation.
+	A 45 degree resolution means 8 layers needs to be calculated.
+	THe configuration space is calculated for each agent or object before it's A* path is determined in this matrix.
+
+Centralized vs. Distributed architecture
+	
+	The processing architecture for a multi-agent system can be centralized or distributed.
+	In a centralized system, a single computing entity takes the decisions and the actions are carried out in a distributed fashion.
+	In a distributed system, each computing entity are at the same level of decision making, and the collective consensus takes the system to the global goal (e.g. ant colony optimization).
+	In our implementation, we have adopted a middle road.
+	While centralized systems require a single processing entity and other non-intelligent actuators with command receiving ability, it is essentially a heterogeneous system, with only 1 way communication requirement.
+	The drawback of such a system is in the robustness that can prove fatal on event of the central node failure.
+	In a distributed system, node failures are handled ad-hoc and the system adjusts to a different (optimal/sub-optimal) solution path.
+	While each Raspberry Pi in itself is capable of hosting the centralized processing unit, a leader follower approach is taken.
+	A leader is elected in distributed manner, and thereafter the system behaves in a centralized order.
+	On event of node readjustments, the system falls back to a distributed election before again the leader is chosen.
+	This architecture reduces the communication overhead in 2-way consensus in a fully distributed system, yet guarantees the same level of robustness.
+	It can also model a heterogeneous swarm, where nodes with limited computing capability can choose not to take part in the leader election.
+
+Algorithms
+
+Sokoban
+
+

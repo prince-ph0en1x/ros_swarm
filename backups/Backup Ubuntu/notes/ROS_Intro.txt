@@ -1,0 +1,10 @@
+
+
+ROS is an open-source, meta-operating system for your robot.
+It provides the services you would expect from an operating system, including hardware abstraction, low-level device control, implementation of commonly-used functionality, message-passing between processes, and package management.
+It also provides tools and libraries for obtaining, building, writing, and running code across multiple computers.
+
+One of the basic goals of ROS is to enable roboticists to design software as a collection of small, mostly independent programs.
+A running instance of a ROS program is called a node.
+If we execute multiple copies of the same program at the same time, each uses a different node name.
+

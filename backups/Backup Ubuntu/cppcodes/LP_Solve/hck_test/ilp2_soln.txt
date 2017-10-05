@@ -1,0 +1,41 @@
+
+Value of objective function: 19728
+
+Actual values of the variables:
+cost                        19728
+x00                             1
+x01                             0
+x02                             0
+x03                             0
+x04                             0
+x05                             0
+x10                             0
+x11                             0
+x12                             0
+x13                             0
+x14                             0
+x15                             1
+x20                             0
+x21                             0
+x22                             0
+x23                             1
+x24                             0
+x25                             0
+x30                             0
+x31                             0
+x32                             1
+x33                             0
+x34                             0
+x35                             0
+x40                             0
+x41                             1
+x42                             0
+x43                             0
+x44                             0
+x45                             0
+x50                             0
+x51                             0
+x52                             0
+x53                             0
+x54                             1
+x55                             0
