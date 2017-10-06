@@ -39,15 +39,15 @@ public:
 	static const int GRID_Y = 14;				// Grid Sized Cells in Y direction
 	static const int GRID_X = 9;				// Grid Sized Cells in X direction
 	static const int GRID_A = 4;				// Angular Resolution (2*PI/GRID_A)	--> 4 >> 90deg, 8 >> 45deg, 16 >> 22.5deg, 36 >> 10deg  
+	static const int SCALE = 30;				// 1 Cell = 30cm x 30cm
 	
 	static const int NUM_OBJ = 1;				// Number of total target objects on map
 	static const int NUM_AGT = 2;				// Number of total agents on same ROS master
 	
+	// Only required for Qt simulation
 	static const int GRID_SZ = 32;					// Qt Frame Grid Size in Pixels
 	static const int WORLD_X = GRID_SZ * GRID_X;	// Column Pixels
 	static const int WORLD_Y = GRID_SZ * GRID_Y;	// Row Pixels
-	
-	static const int SCALE = 30;				// 1 Cell = 30cm x 30cm
 };
 
 #endif

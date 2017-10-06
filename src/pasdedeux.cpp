@@ -41,7 +41,7 @@ enum EnvStates {	// for printWorld grid map display
 	// ############################################## @$ ##############################################
 	
 
-	
+// For controlling Raspberry Pi GPIO Pins using Wiring Pi library
 class control
 {
 	
